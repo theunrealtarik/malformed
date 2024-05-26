@@ -1,19 +1,48 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-#[derive(Component)]
-pub struct Responsive;
+pub const DEFAULT_CYCLE_DELAY: Duration = Duration::from_millis(70);
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Animation {
     pub timer: Timer,
-    pub frames: &'static [Frame],
+    pub frames: Vec<Frame>,
 }
 
-#[derive(Component)]
+impl Animation {
+    pub fn new(frames: Vec<Frame>) -> Self {
+        Self {
+            timer: Timer::new(DEFAULT_CYCLE_DELAY, TimerMode::Repeating),
+            frames,
+        }
+    }
+}
+
+#[derive(Component, Debug)]
 pub struct Frame {
     pub duration: Duration,
     pub index: usize,
+}
+
+impl Frame {
+    pub fn new(index: usize, duration: Duration) -> Self {
+        Self { index, duration }
+    }
+
+    pub fn default(index: usize) -> Self {
+        Self {
+            index,
+            duration: DEFAULT_CYCLE_DELAY,
+        }
+    }
+
+    pub fn range(start: usize, end: usize) -> Vec<Self> {
+        let mut frames = vec![];
+        for index in start..=end {
+            frames.push(Frame::default(index));
+        }
+        frames
+    }
 }
 
 pub struct GameAnimationPlugin;
@@ -31,13 +60,17 @@ impl GameAnimationPlugin {
                 let current_idx = animation
                     .frames
                     .iter()
-                    .position(|s| s.index != atlas.index)
+                    .position(|s| s.index == atlas.index)
                     .unwrap_or(0);
 
                 let next_idx = (current_idx + animation.timer.times_finished_this_tick() as usize)
                     % animation.frames.len();
 
-                atlas.index = animation.frames[next_idx].index;
+                let next_frame = &animation.frames[next_idx];
+                let (index, duration) = (next_frame.index, next_frame.duration);
+
+                atlas.index = index;
+                animation.timer.set_duration(duration);
             }
         }
     }

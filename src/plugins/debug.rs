@@ -13,8 +13,6 @@ impl Plugin for DebugPlugin {
         #[cfg(debug_assertions)]
         {
             app.add_plugins(StateInspectorPlugin::<GameState>::default())
-                .register_type::<Acceleration>()
-                .register_type::<Velocity>()
                 .add_plugins(WorldInspectorPlugin::default())
                 .add_plugins(FrameTimeDiagnosticsPlugin)
                 .add_systems(Update, Self::inspector_ui);
@@ -42,5 +40,38 @@ impl DebugPlugin {
                 }
             });
         });
+    }
+}
+
+pub struct EntityDebugMenu;
+
+#[allow(dead_code)]
+impl EntityDebugMenu {
+    pub fn inspector<E: Component>(world: &mut World) {
+        #[cfg(debug_assertions)]
+        {
+            use bevy_egui::egui::*;
+
+            let mut egui_context = world
+                .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+                .single(world)
+                .clone();
+
+            let entities = world
+                .query_filtered::<Entity, With<E>>()
+                .iter(world)
+                .collect::<Vec<Entity>>();
+
+            let name = std::any::type_name::<E>();
+            let window = Window::new(name).resizable(true);
+
+            window.show(egui_context.get_mut(), |ui| {
+                ScrollArea::both().show(ui, |ui| {
+                    for entity in entities {
+                        bevy_inspector_egui::bevy_inspector::ui_for_entity(world, entity, ui);
+                    }
+                });
+            });
+        }
     }
 }

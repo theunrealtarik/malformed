@@ -66,7 +66,9 @@ impl Plugin for MovementPlugin {
             (Self::update_velocity, Self::update_position)
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(GameAssetsState::Loaded)),
-        );
+        )
+        .register_type::<Acceleration>()
+        .register_type::<Velocity>();
     }
 }
 

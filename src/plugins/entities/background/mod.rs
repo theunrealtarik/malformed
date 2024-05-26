@@ -1,7 +1,9 @@
 use bevy::prelude::*;
-use glib::Responsive;
 
 use crate::plugins::game::prelude::*;
+
+#[derive(Component)]
+pub struct Background;
 
 #[derive(Component)]
 struct Layer(usize);
@@ -14,7 +16,7 @@ impl Plugin for BackgroundPlugin {
 }
 
 impl BackgroundPlugin {
-    fn setup(mut commands: Commands, textures: Res<TextureAssets>) {
+    pub fn setup(mut commands: Commands, textures: Res<TextureAssets>) {
         let bg_images = [
             ("Clouds", textures.bg_cloud_0.clone()),
             ("Buildings", textures.bg_buildings_0.clone()),
@@ -33,7 +35,7 @@ impl BackgroundPlugin {
                     ..Default::default()
                 })
                 .insert(Layer(depth))
-                .insert(Name::new(format!("{}", name)))
+                .insert(Name::new(name.to_string()))
                 .insert(Responsive);
         }
     }

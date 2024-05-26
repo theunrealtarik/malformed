@@ -43,7 +43,8 @@ impl GameMenuPlugin {
                 .with_text_justify(JustifyText::Center)
                 .with_style(Style {
                     justify_self: JustifySelf::Center,
-                    align_self: AlignSelf::Center,
+                    align_self: AlignSelf::End,
+                    margin: UiRect::bottom(Val::Px(50.0)),
                     ..default()
                 }),
                 Menu,
