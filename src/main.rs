@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(GameCameraPlugin)
         .add_plugins(GameMenuPlugin)
         .add_plugins(BackgroundPlugin)
-        .add_plugins(PlatformsPlugin)
+        .add_plugins(TerrainPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(MovementPlugin)
         .add_plugins(DebugPlugin)

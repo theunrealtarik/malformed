@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 
 use crate::plugins::game::prelude::*;
 
@@ -6,7 +6,34 @@ use crate::plugins::game::prelude::*;
 pub struct Background;
 
 #[derive(Component)]
-struct Layer(usize);
+struct Depth(usize);
+
+#[derive(Bundle)]
+struct Layer {
+    sprite: SpriteBundle,
+    depth: Depth,
+    name: Name,
+    responsive: Responsive,
+}
+
+impl Layer {
+    fn new(name: &'static str, texture: Handle<Image>, depth: usize) -> Self {
+        Self {
+            sprite: SpriteBundle {
+                texture,
+                transform: Transform::from_xyz(0.0, 0.0, depth as f32),
+                sprite: Sprite {
+                    anchor: Anchor::TopCenter,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            depth: Depth(depth),
+            name: Name::new(name),
+            responsive: Responsive,
+        }
+    }
+}
 
 pub struct BackgroundPlugin;
 impl Plugin for BackgroundPlugin {
@@ -24,19 +51,15 @@ impl BackgroundPlugin {
             ("Buildings", textures.bg_buildings_1.clone()),
         ];
 
-        for (depth, (name, texture)) in bg_images.iter().enumerate() {
-            commands
-                .spawn(SpriteBundle {
-                    texture: texture.clone(),
-                    transform: Transform {
-                        scale: Vec3::new(1.0, 1.0, 0.0),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .insert(Layer(depth))
-                .insert(Name::new(name.to_string()))
-                .insert(Responsive);
-        }
+        commands
+            .spawn(Background)
+            .insert(Name::new("Background"))
+            .insert(TransformBundle::from(Transform::from_xyz(0.0, 512.0, 0.0)))
+            .insert(InheritedVisibility::default())
+            .with_children(|commands| {
+                for (depth, (name, texture)) in bg_images.iter().enumerate() {
+                    commands.spawn(Layer::new(name, texture.clone(), depth));
+                }
+            });
     }
 }

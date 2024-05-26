@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
+use crate::plugins::debug::*;
+
 pub struct GameAssetsPlugin;
 
 impl Plugin for GameAssetsPlugin {
@@ -16,7 +18,8 @@ impl Plugin for GameAssetsPlugin {
     }
 }
 
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States, Reflect, InspectorOptions)]
+#[reflect(InspectorOptions)]
 pub enum GameAssetsState {
     #[default]
     Pending,
@@ -36,12 +39,16 @@ pub struct TextureAssets {
     #[asset(image(sampler = nearest))]
     #[asset(path = "player.png")]
     pub player: Handle<Image>,
+    #[asset(path = "cabinet.png")]
+    pub cabinet: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct SpriteLayouts {
     #[asset(texture_atlas_layout(tile_size_x = 48.0, tile_size_y = 48.9, columns = 10, rows = 4))]
     pub player_layout: Handle<TextureAtlasLayout>,
+    #[asset(texture_atlas_layout(tile_size_x = 143.0, tile_size_y = 90.0, columns = 1, rows = 2))]
+    pub cabinet_layout: Handle<TextureAtlasLayout>,
 }
 
 #[derive(AssetCollection, Resource)]
