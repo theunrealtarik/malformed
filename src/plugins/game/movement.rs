@@ -1,5 +1,5 @@
+use crate::plugins::debug::*;
 use bevy::prelude::*;
-use bevy_inspector_egui::prelude::*;
 
 use crate::{GameAssetsState, GameState};
 

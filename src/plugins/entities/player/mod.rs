@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::plugins::{debug::EntityDebugMenu, game::prelude::Velocity};
+use crate::plugins::debug::*;
+use crate::plugins::game::prelude::Velocity;
 use crate::*;
 
 const INITIAL_PLAYER_VELOCITY_X: f32 = 0.0;
@@ -46,10 +46,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
             .add_systems(Update, Self::run)
-            .add_systems(
-                Update,
-                EntityDebugMenu::inspector::<Player>.after(Self::setup),
-            )
+            .add_plugins(EntityInspector::<Player>::default())
             .add_systems(
                 Update,
                 Self::init_animation.run_if(in_state(GameAssetsState::Loaded)),

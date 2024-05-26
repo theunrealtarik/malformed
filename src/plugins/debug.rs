@@ -1,10 +1,14 @@
+use std::marker::PhantomData;
+
+use crate::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::EguiContext;
-use bevy_inspector_egui::quick::{StateInspectorPlugin, WorldInspectorPlugin};
 
-use crate::*;
+pub use bevy_inspector_egui::prelude::*;
+pub use bevy_inspector_egui::quick::FilterQueryInspectorPlugin;
+pub use bevy_inspector_egui::quick::{StateInspectorPlugin, WorldInspectorPlugin};
 
 pub struct DebugPlugin;
 
@@ -43,35 +47,26 @@ impl DebugPlugin {
     }
 }
 
-pub struct EntityDebugMenu;
+pub struct EntityInspector<E> {
+    marker: PhantomData<E>,
+}
 
-#[allow(dead_code)]
-impl EntityDebugMenu {
-    pub fn inspector<E: Component>(world: &mut World) {
+impl<E> Default for EntityInspector<E> {
+    fn default() -> Self {
+        Self {
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<E: 'static> Plugin for EntityInspector<E>
+where
+    E: Component,
+{
+    fn build(&self, app: &mut App) {
         #[cfg(debug_assertions)]
         {
-            use bevy_egui::egui::*;
-
-            let mut egui_context = world
-                .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
-                .single(world)
-                .clone();
-
-            let entities = world
-                .query_filtered::<Entity, With<E>>()
-                .iter(world)
-                .collect::<Vec<Entity>>();
-
-            let name = std::any::type_name::<E>();
-            let window = Window::new(name).resizable(true);
-
-            window.show(egui_context.get_mut(), |ui| {
-                ScrollArea::both().show(ui, |ui| {
-                    for entity in entities {
-                        bevy_inspector_egui::bevy_inspector::ui_for_entity(world, entity, ui);
-                    }
-                });
-            });
+            app.add_plugins(FilterQueryInspectorPlugin::<With<E>>::default());
         }
     }
 }
