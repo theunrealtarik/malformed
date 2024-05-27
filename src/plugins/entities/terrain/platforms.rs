@@ -21,6 +21,9 @@ const RTE_X: f32 = 0.0;
 const RTE_Y: f32 = -269.5;
 
 #[derive(Component)]
+pub struct Scrollable;
+
+#[derive(Component)]
 pub struct Cabinet;
 
 #[derive(Component)]
@@ -56,7 +59,8 @@ struct PlatformBundle {
     sprite_bundle: SpriteBundle,
     body: RigidBody,
     collider: Collider,
-    tag: Platform,
+    data: Platform,
+    scrollable: Scrollable,
     name: Name,
 }
 
@@ -77,7 +81,8 @@ impl PlatformBundle {
             },
             body: RigidBody::Fixed,
             collider: Collider::cuboid(0.5, 0.5),
-            tag: platform,
+            data: platform,
+            scrollable: Scrollable,
             name: match name {
                 Some(name) => Name::new(name),
                 None => Name::new("Platform"),
@@ -94,7 +99,8 @@ impl Plugin for PlatformsPlugin {
             .init_resource::<WorldPlatforms>()
             .add_systems(
                 Update,
-                Self::generate_platforms.run_if(in_state(GameState::Game)),
+                (Self::generate_platforms, Self::scroll_platforms)
+                    .run_if(in_state(GameState::Game)),
             );
 
         #[cfg(debug_assertions)]
@@ -128,7 +134,11 @@ impl PlatformsPlugin {
             },
         ));
 
-        commands.spawn(PlatformBundle::new(Color::BLACK, None, Platform::default()));
+        commands.spawn(PlatformBundle::new(
+            Color::BLACK,
+            Some("Initial Platform"),
+            Platform::default(),
+        ));
 
         commands
             .spawn(SpriteSheetBundle {
@@ -149,6 +159,7 @@ impl PlatformsPlugin {
                 ..Default::default()
             })
             .insert(Name::new("Cabinet"))
+            .insert(Scrollable)
             .insert(Cabinet)
             .insert(Sensor)
             .with_children(|commands| {
@@ -191,5 +202,13 @@ impl PlatformsPlugin {
         }
     }
 
-    fn scroll_platforms() {}
+    fn scroll_platforms(mut platforms: Query<&mut Transform, With<Scrollable>>, time: Res<Time>) {
+        if platforms.is_empty() {
+            return;
+        }
+
+        for mut platform in platforms.iter_mut() {
+            platform.translation += Vec3::new(-1.0 * 100.0 * time.delta_seconds(), 0.0, 0.0);
+        }
+    }
 }

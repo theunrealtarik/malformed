@@ -37,7 +37,9 @@ impl PlayerAnimation {
             Self::Idle => Animation::default(Frame::range(0, 9)),
             Self::Walking => Animation::default(Frame::range(10, 17)),
             Self::Running => Animation::default(Frame::range(20, 27)),
-            Self::Rising => Animation::default(Frame::range(30, 31)),
+            Self::Rising => {
+                Animation::new(DEFAULT_CYCLE_DELAY, Frame::range(30, 31), TimerMode::Once)
+            }
             Self::Falling => {
                 Animation::new(DEFAULT_CYCLE_DELAY, Frame::range(32, 32), TimerMode::Once)
             }
