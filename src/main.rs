@@ -15,7 +15,6 @@ fn main() {
         .add_plugins(BackgroundPlugin)
         .add_plugins(TerrainPlugin)
         .add_plugins(PlayerPlugin)
-        .add_plugins(MovementPlugin)
         .add_plugins(DebugPlugin)
         .run();
 }

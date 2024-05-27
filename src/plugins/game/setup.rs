@@ -5,6 +5,7 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 
 use super::prelude::Responsive;
+use crate::{plugins::entities::terrain::Platform, GameGroundCheckPlugin};
 use glib::*;
 
 pub struct GameEssentialsPlugin;
@@ -17,6 +18,7 @@ impl Plugin for GameEssentialsPlugin {
             .insert_resource(Msaa::Off)
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
             .add_plugins(RapierDebugRenderPlugin::default())
+            .add_plugins(GameGroundCheckPlugin::<Platform>::default())
             .add_plugins(
                 DefaultPlugins
                     .set(WindowPlugin {
