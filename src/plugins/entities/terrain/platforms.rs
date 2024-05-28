@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::ResourceInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use rand::prelude::*;
@@ -7,15 +6,17 @@ use rand::prelude::*;
 use crate::*;
 use plugins::debug::*;
 
+use self::plugins::entities::player::{AuxiliaryVelocity, Player};
+
 const PLATFORMS_MAX_Y: f32 = -640.0;
 const PLATFORMS_MIN_Y: f32 = PLATFORMS_MAX_Y - 128.0;
-const PLATFORMS_MAX_SPACING: f32 = 100.0;
-const PLATFORMS_MIN_SPACING: f32 = 50.0;
+const PLATFORMS_MAX_SPACING: f32 = 200.0;
+const PLATFORMS_MIN_SPACING: f32 = 100.0;
 const PLATFORMS_MAX_WIDTH: f32 = 1000.0;
 const PLATFORMS_MIN_WIDTH: f32 = 500.0;
 const PLATFORMS_HEIGHT: f32 = 1000.0;
 
-const WORLD_MAX_PLATFORMS: u8 = 5;
+const WORLD_MAX_PLATFORMS: u8 = 10;
 
 const RTE_X: f32 = 0.0;
 const RTE_Y: f32 = -269.5;
@@ -29,13 +30,7 @@ pub struct Cabinet;
 #[derive(Component)]
 pub struct Door;
 
-#[derive(Resource, Default, Reflect, InspectorOptions)]
-struct WorldPlatforms {
-    last_platform: Platform,
-    count: u8,
-}
-
-#[derive(Component, Reflect, Clone, Copy)]
+#[derive(Component, Reflect, Clone, Copy, Debug)]
 pub struct Platform {
     pos_x: f32,
     pos_y: f32,
@@ -48,7 +43,7 @@ impl Default for Platform {
         Self {
             pos_x: 0.0,
             pos_y: PLATFORMS_MIN_Y,
-            width: PLATFORMS_MAX_WIDTH * 2.0,
+            width: PLATFORMS_MAX_WIDTH * 4.0,
             height: PLATFORMS_HEIGHT,
         }
     }
@@ -91,22 +86,19 @@ impl PlatformBundle {
     }
 }
 
+#[derive(Default)]
 pub struct PlatformsPlugin;
 
 impl Plugin for PlatformsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
-            .init_resource::<WorldPlatforms>()
+            .add_systems(Update, Self::despawn_platforms)
             .add_systems(
                 Update,
-                (Self::generate_platforms, Self::scroll_platforms)
+                (Self::scroll_platforms, Self::generate_platforms)
                     .run_if(in_state(GameState::Game)),
-            );
-
-        #[cfg(debug_assertions)]
-        {
-            app.add_plugins(ResourceInspectorPlugin::<WorldPlatforms>::default());
-        }
+            )
+            .add_plugins(EntityInspector::<Platform>::default());
     }
 }
 
@@ -179,16 +171,23 @@ impl PlatformsPlugin {
             });
     }
 
-    fn generate_platforms(mut commands: Commands, mut world_platforms: ResMut<WorldPlatforms>) {
+    fn generate_platforms(mut commands: Commands, mut platforms: Query<(&Platform, &Transform)>) {
         let mut rng = rand::thread_rng();
-        let prev = &world_platforms.last_platform;
 
-        if world_platforms.count < WORLD_MAX_PLATFORMS {
+        let mut platforms = platforms.iter_mut().collect::<Vec<_>>();
+        platforms.sort_by(|(_, a), (_, b)| a.translation.x.partial_cmp(&b.translation.x).unwrap());
+
+        let (prev, prev_trans) = match platforms.last() {
+            Some((&platform, &transform)) => (platform, transform),
+            None => (Platform::default(), Transform::default()),
+        };
+
+        if platforms.len() < WORLD_MAX_PLATFORMS as usize {
             let width = rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH);
             let height = prev.height;
 
             let next_platform = Platform {
-                pos_x: prev.pos_x
+                pos_x: prev_trans.translation.x
                     + (prev.width + width) / 2.0
                     + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING),
                 pos_y: rng.gen_range(PLATFORMS_MIN_Y..=PLATFORMS_MAX_Y),
@@ -196,19 +195,37 @@ impl PlatformsPlugin {
                 height,
             };
             commands.spawn(PlatformBundle::new(Color::BLACK, None, next_platform));
-
-            world_platforms.count += 1;
-            world_platforms.last_platform = next_platform;
         }
     }
 
-    fn scroll_platforms(mut platforms: Query<&mut Transform, With<Scrollable>>, time: Res<Time>) {
+    fn despawn_platforms(
+        mut commands: Commands,
+        platforms: Query<(Entity, &Transform), With<Scrollable>>,
+    ) {
         if platforms.is_empty() {
             return;
         }
 
+        for (entity, transform) in platforms.iter() {
+            if transform.translation.x <= PLATFORMS_MAX_WIDTH * -4.0 {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+
+    fn scroll_platforms(
+        mut platforms: Query<&mut Transform, With<Scrollable>>,
+        time: Res<Time>,
+        velocity: Query<&AuxiliaryVelocity, With<Player>>,
+    ) {
+        if platforms.is_empty() {
+            return;
+        }
+
+        let velocity = velocity.single();
         for mut platform in platforms.iter_mut() {
-            platform.translation += Vec3::new(-1.0 * 100.0 * time.delta_seconds(), 0.0, 0.0);
+            platform.translation += Vec3::new(-1.0 * time.delta_seconds(), 0.0, 0.0)
+                * Vec3::new(velocity.value.x, velocity.value.y, 0.0);
         }
     }
 }

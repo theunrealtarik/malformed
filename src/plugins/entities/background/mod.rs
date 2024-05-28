@@ -1,22 +1,26 @@
 use bevy::{prelude::*, sprite::Anchor};
 
+use crate::plugins::entities::player::*;
 use crate::plugins::game::prelude::*;
 
 #[derive(Component)]
 pub struct Background;
 
 #[derive(Component)]
+pub struct Layer;
+
+#[derive(Component)]
 struct Depth(usize);
 
 #[derive(Bundle)]
-struct Layer {
+struct LayerBundle {
     sprite: SpriteBundle,
     depth: Depth,
     name: Name,
     responsive: Responsive,
 }
 
-impl Layer {
+impl LayerBundle {
     fn new(name: &'static str, texture: Handle<Image>, depth: usize) -> Self {
         Self {
             sprite: SpriteBundle {
@@ -39,6 +43,7 @@ pub struct BackgroundPlugin;
 impl Plugin for BackgroundPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup);
+        app.add_systems(Update, Self::update.run_if(in_state(GameState::Game)));
     }
 }
 
@@ -47,19 +52,45 @@ impl BackgroundPlugin {
         let bg_images = [
             ("Clouds", textures.bg_cloud_0.clone()),
             ("Buildings", textures.bg_buildings_0.clone()),
-            ("Cloud", textures.bg_cloud_1.clone()),
+            ("Clouds", textures.bg_cloud_1.clone()),
             ("Buildings", textures.bg_buildings_1.clone()),
         ];
 
         commands
             .spawn(Background)
             .insert(Name::new("Background"))
-            .insert(TransformBundle::from(Transform::from_xyz(0.0, 512.0, 0.0)))
+            .insert(TransformBundle {
+                local: Transform {
+                    translation: Vec3::new(0.0, 512.0, 0.0),
+                    scale: Vec3::new(3.0, 3.0, 0.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
             .insert(InheritedVisibility::default())
             .with_children(|commands| {
                 for (depth, (name, texture)) in bg_images.iter().enumerate() {
-                    commands.spawn(Layer::new(name, texture.clone(), depth));
+                    commands
+                        .spawn(LayerBundle::new(
+                            name,
+                            texture.clone(),
+                            bg_images.len() - depth,
+                        ))
+                        .insert(Layer);
                 }
             });
+    }
+
+    fn update(
+        player_velocity: Query<&AuxiliaryVelocity, With<Player>>,
+        mut layers: Query<(&mut Transform, &Depth), With<Layer>>,
+        time: Res<Time>,
+    ) {
+        if let Ok(velocity) = player_velocity.get_single() {
+            for (mut transfrom, depth) in layers.iter_mut() {
+                transfrom.translation.x -=
+                    (velocity.value.x / (4.0 * depth.0 as f32)) * time.delta_seconds();
+            }
+        }
     }
 }

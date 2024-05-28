@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::TextureAssets;
+
 use super::assets::{FontsAssets, GameAssetsState};
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States, Reflect)]
@@ -29,31 +31,24 @@ impl Plugin for GameMenuPlugin {
 struct Menu;
 
 impl GameMenuPlugin {
-    fn wait(mut commands: Commands, fonts: Res<FontsAssets>, query: Query<Entity, With<Menu>>) {
+    fn wait(
+        mut commands: Commands,
+        textures: Res<TextureAssets>,
+        query: Query<Entity, With<Menu>>,
+    ) {
         if query.is_empty() {
-            commands.spawn((
-                TextBundle::from_section(
-                    "space it to start it",
-                    TextStyle {
-                        font: fonts.vcr.clone(),
-                        font_size: 50.0,
-                        ..default()
-                    },
-                )
-                .with_text_justify(JustifyText::Center)
-                .with_style(Style {
-                    justify_self: JustifySelf::Center,
-                    align_self: AlignSelf::End,
-                    margin: UiRect::bottom(Val::Px(50.0)),
-                    ..default()
-                }),
-                Menu,
-            ));
+            commands
+                .spawn(SpriteBundle {
+                    texture: textures.pts.clone(),
+                    transform: Transform::from_xyz(0.0, 512.0, 0.0),
+                    ..Default::default()
+                })
+                .insert(Menu);
         }
     }
 
     fn start(
-        mut query: Query<(&Text, &mut Visibility), With<Menu>>,
+        mut query: Query<&mut Visibility, With<Menu>>,
         mut game_state: ResMut<NextState<GameState>>,
         input: Res<ButtonInput<KeyCode>>,
     ) {
@@ -61,7 +56,7 @@ impl GameMenuPlugin {
             return;
         }
 
-        for (_, mut visibility) in query.iter_mut() {
+        for mut visibility in query.iter_mut() {
             if input.just_pressed(KeyCode::Space) {
                 *visibility = Visibility::Hidden;
                 game_state.set(GameState::Game);

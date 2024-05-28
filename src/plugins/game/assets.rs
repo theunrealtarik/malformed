@@ -41,6 +41,8 @@ pub struct TextureAssets {
     pub player: Handle<Image>,
     #[asset(path = "cabinet.png")]
     pub cabinet: Handle<Image>,
+    #[asset(path = "pts.png")]
+    pub pts: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
