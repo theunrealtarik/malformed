@@ -17,8 +17,10 @@ struct LayerBundle {
     sprite: SpriteBundle,
     depth: Depth,
     name: Name,
-    responsive: Responsive,
 }
+
+const BACKGROUND_IMAGE_WIDTH: f32 = 4608.0;
+// const BACKGROUND_IMAGE_HEIGHT: f32 = 512.0;
 
 impl LayerBundle {
     fn new(name: &'static str, texture: Handle<Image>, depth: usize) -> Self {
@@ -34,7 +36,6 @@ impl LayerBundle {
             },
             depth: Depth(depth),
             name: Name::new(name),
-            responsive: Responsive,
         }
     }
 }
@@ -76,7 +77,8 @@ impl BackgroundPlugin {
                             texture.clone(),
                             bg_images.len() - depth,
                         ))
-                        .insert(Layer);
+                        .insert(Layer)
+                        .insert(Responsive);
                 }
             });
     }
@@ -87,8 +89,13 @@ impl BackgroundPlugin {
         time: Res<Time>,
     ) {
         if let Ok(velocity) = player_velocity.get_single() {
-            for (mut transfrom, depth) in layers.iter_mut() {
-                transfrom.translation.x -=
+            for (mut transform, depth) in layers.iter_mut() {
+                let frame = (1.0 / 3.0) * BACKGROUND_IMAGE_WIDTH;
+                if transform.translation.x <= frame * -1.0 {
+                    transform.translation.x = frame;
+                }
+
+                transform.translation.x -=
                     (velocity.value.x / (4.0 * depth.0 as f32)) * time.delta_seconds();
             }
         }
