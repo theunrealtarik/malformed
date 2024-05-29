@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+// use bevy_rapier2d::na;
 use bevy_rapier2d::prelude::*;
 
 use crate::plugins::debug::*;
@@ -9,22 +10,26 @@ use crate::*;
 
 const PLAYER_SCALE_X: f32 = 2.0;
 const PLAYER_SCALE_Y: f32 = 2.0;
-const PLAYER_MASS: f32 = 85.0;
+const PLAYER_MASS: f32 = 100.0;
 
 const PLAYER_COLLIDER_WIDTH: f32 = 24.0;
 const PLAYER_COLLIDER_HEIGHT: f32 = 36.0;
 
+const PLAYER_RISE_GRAVITY: f32 = 1.0;
+const PLAYER_FALL_GRAVITY: f32 = 1.8;
+
 const PLAYER_COYOTE_JUMP_TIME: f32 = 0.35;
 const PLAYER_JUMP_BUFFERING_TIME: f32 = 0.3;
-
-const PLAYER_MAX_VELOCITY_X: f32 = 800.0;
-const PLAYER_VELOCITY_BUMP: f32 = 150.0;
-const PLAYER_JUMP_HEIGHT: f32 = 300.0;
+pub const PLAYER_JUMP_HEIGHT: f32 = 200.0;
 
 const PLAYER_WALKING_TIMER: Duration = Duration::from_secs(10);
 
+pub const PLAYER_MAX_VELOCITY_X: f32 = 800.0;
+const PLAYER_VELOCITY_BUMP: f32 = 150.0;
 const INITIAL_PLAYER_VELOCITY_X: f32 = 80.0;
 const INITIAL_PLAYER_ACCECLERATION_X: f32 = 50.0;
+
+const PLAYER_JUMP_WINDOW: f32 = 0.3;
 
 #[derive(Component)]
 pub struct Player;
@@ -56,19 +61,12 @@ pub enum Being {
     Alive,
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct Jump {
     coyote: f32,
     buffering: f32,
-}
-
-impl Default for Jump {
-    fn default() -> Self {
-        Self {
-            coyote: 0.0,
-            buffering: 0.0,
-        }
-    }
+    press: f32,
+    rising: bool,
 }
 
 #[derive(Component)]
@@ -301,16 +299,25 @@ impl PlayerPlugin {
             }
         } else if velocity.linvel.y < -0.01 {
             controller.curr_animation = PlayerAnimation::Falling;
-            gravity.0 = 1.0;
+            *gravity = GravityScale(PLAYER_FALL_GRAVITY);
         } else if velocity.linvel.y > 0.01 {
             controller.curr_animation = PlayerAnimation::Rising;
-            gravity.0 = 1.6;
+            *gravity = GravityScale(PLAYER_RISE_GRAVITY);
         }
     }
 
     fn jump(
         mut commands: Commands,
-        mut player: Query<(Entity, &mut Jump, &ReadMassProperties), With<Player>>,
+        mut player: Query<
+            (
+                Entity,
+                &mut Jump,
+                &ReadMassProperties,
+                &mut GravityScale,
+                &Velocity,
+            ),
+            With<Player>,
+        >,
         children: Query<&Grounded, With<PlayerChild>>,
         input: Res<ButtonInput<KeyCode>>,
         time: Res<Time>,
@@ -320,7 +327,7 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mut jump, mass) = player.single_mut();
+        let (entity, mut jump, mass, mut gravity, velocity) = player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
@@ -331,23 +338,38 @@ impl PlayerPlugin {
 
         if input.just_pressed(KeyCode::Space) {
             jump.coyote = 0.0;
+            jump.press = 0.0;
             jump.buffering = PLAYER_JUMP_BUFFERING_TIME;
         } else {
             jump.buffering -= time.delta_seconds();
         }
 
+        let jump_magnitude = mass.get().mass * (PLAYER_JUMP_HEIGHT * rules.gravity.y * -2.0).sqrt();
         if jump.buffering > 0.0 && jump.coyote > 0.0 {
-            let impulse = Vec2::new(
-                0.0,
-                mass.get().mass * (PLAYER_JUMP_HEIGHT * rules.gravity.y * -2.0).sqrt(),
-            );
-
             commands.entity(entity).insert(ExternalImpulse {
-                impulse,
-                torque_impulse: 100.0,
+                impulse: Vec2::new(0.0, jump_magnitude),
+                torque_impulse: 0.0,
             });
 
             jump.buffering = 0.0;
+            jump.rising = true;
+        }
+
+        if jump.rising {
+            jump.press += time.delta_seconds();
+
+            if jump.press < PLAYER_JUMP_WINDOW && input.just_released(KeyCode::Space) {
+                commands.entity(entity).insert(ExternalImpulse {
+                    impulse: Vec2::new(0.0, -0.35 * jump_magnitude),
+                    torque_impulse: 0.0,
+                });
+                jump.press = 0.0;
+            }
+
+            if velocity.linvel.y < 0.0 {
+                *gravity = GravityScale(PLAYER_FALL_GRAVITY);
+                jump.rising = false;
+            }
         }
     }
 }

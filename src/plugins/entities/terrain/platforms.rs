@@ -6,11 +6,11 @@ use rand::prelude::*;
 use crate::*;
 use plugins::debug::*;
 
-use self::plugins::entities::player::{AuxiliaryVelocity, Player};
+use self::plugins::entities::player::*;
 
-const PLATFORMS_MAX_Y: f32 = -640.0;
-const PLATFORMS_MIN_Y: f32 = PLATFORMS_MAX_Y - 128.0;
-const PLATFORMS_MAX_SPACING: f32 = 200.0;
+const PLATFORMS_MAX_Y: f32 = PLAYER_JUMP_HEIGHT * 0.5 + PLATFORMS_MIN_Y;
+const PLATFORMS_MIN_Y: f32 = -640.0;
+const PLATFORMS_MAX_SPACING: f32 = 300.0;
 const PLATFORMS_MIN_SPACING: f32 = 100.0;
 const PLATFORMS_MAX_WIDTH: f32 = 1000.0;
 const PLATFORMS_MIN_WIDTH: f32 = 500.0;
@@ -19,7 +19,7 @@ const PLATFORMS_HEIGHT: f32 = 1000.0;
 const WORLD_MAX_PLATFORMS: u8 = 10;
 
 const RTE_X: f32 = 0.0;
-const RTE_Y: f32 = -269.5;
+const RTE_Y: f32 = PLATFORMS_MIN_Y + PLATFORMS_HEIGHT / 2.0;
 
 #[derive(Component)]
 pub struct Scrollable;
@@ -43,7 +43,7 @@ impl Default for Platform {
         Self {
             pos_x: 0.0,
             pos_y: PLATFORMS_MIN_Y,
-            width: PLATFORMS_MAX_WIDTH * 4.0,
+            width: PLATFORMS_MAX_WIDTH * 10.0,
             height: PLATFORMS_HEIGHT,
         }
     }
@@ -171,10 +171,18 @@ impl PlatformsPlugin {
             });
     }
 
-    fn generate_platforms(mut commands: Commands, mut platforms: Query<(&Platform, &Transform)>) {
-        let mut rng = rand::thread_rng();
+    fn generate_platforms(
+        mut commands: Commands,
+        mut platforms: Query<(&Platform, &Transform)>,
+        velocity: Query<&AuxiliaryVelocity, With<Player>>,
+    ) {
+        let Ok(velocity) = velocity.get_single() else {
+            return;
+        };
 
+        let mut rng = rand::thread_rng();
         let mut platforms = platforms.iter_mut().collect::<Vec<_>>();
+
         platforms.sort_by(|(_, a), (_, b)| a.translation.x.partial_cmp(&b.translation.x).unwrap());
 
         let (prev, prev_trans) = match platforms.last() {
@@ -183,17 +191,19 @@ impl PlatformsPlugin {
         };
 
         if platforms.len() < WORLD_MAX_PLATFORMS as usize {
-            let width = rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH);
+            let growth = 1.0 + velocity.value.x / PLAYER_MAX_VELOCITY_X;
+            let width = rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH) * growth;
+            let spacing = rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth
+                + PLATFORMS_MIN_SPACING;
             let height = prev.height;
 
             let next_platform = Platform {
-                pos_x: prev_trans.translation.x
-                    + (prev.width + width) / 2.0
-                    + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING),
+                pos_x: prev_trans.translation.x + (prev.width + width) / 2.0 + spacing,
                 pos_y: rng.gen_range(PLATFORMS_MIN_Y..=PLATFORMS_MAX_Y),
                 width,
                 height,
             };
+
             commands.spawn(PlatformBundle::new(Color::BLACK, None, next_platform));
         }
     }
@@ -207,7 +217,7 @@ impl PlatformsPlugin {
         }
 
         for (entity, transform) in platforms.iter() {
-            if transform.translation.x <= PLATFORMS_MAX_WIDTH * -4.0 {
+            if transform.translation.x <= PLATFORMS_MAX_WIDTH * -8.0 {
                 commands.entity(entity).despawn_recursive();
             }
         }
