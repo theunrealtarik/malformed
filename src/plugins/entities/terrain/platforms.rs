@@ -10,7 +10,7 @@ use self::plugins::entities::player::*;
 
 const PLATFORMS_MAX_Y: f32 = PLAYER_JUMP_HEIGHT * 0.5 + PLATFORMS_MIN_Y;
 const PLATFORMS_MIN_Y: f32 = -640.0;
-const PLATFORMS_MAX_SPACING: f32 = 300.0;
+const PLATFORMS_MAX_SPACING: f32 = 400.0;
 const PLATFORMS_MIN_SPACING: f32 = 100.0;
 const PLATFORMS_MAX_WIDTH: f32 = 1000.0;
 const PLATFORMS_MIN_WIDTH: f32 = 500.0;
@@ -96,7 +96,8 @@ impl Plugin for PlatformsPlugin {
             .add_systems(
                 Update,
                 (Self::scroll_platforms, Self::generate_platforms)
-                    .run_if(in_state(GameState::Game)),
+                    .run_if(in_state(GameState::Resumed))
+                    .run_if(in_state(Being::Alive)),
             )
             .add_plugins(EntityInspector::<Platform>::default());
     }
@@ -192,11 +193,16 @@ impl PlatformsPlugin {
 
         if platforms.len() < WORLD_MAX_PLATFORMS as usize {
             let growth = 1.0 + velocity.value.x / PLAYER_MAX_VELOCITY_X;
-            let width = rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH) * growth;
-            let spacing = rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth
-                + PLATFORMS_MIN_SPACING;
-            let height = prev.height;
 
+            let width = (PLATFORMS_MAX_WIDTH - PLATFORMS_MIN_WIDTH)
+                + rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH) * growth
+                + PLATFORMS_MIN_WIDTH;
+
+            let spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
+                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth
+                + PLATFORMS_MIN_SPACING;
+
+            let height = prev.height;
             let next_platform = Platform {
                 pos_x: prev_trans.translation.x + (prev.width + width) / 2.0 + spacing,
                 pos_y: rng.gen_range(PLATFORMS_MIN_Y..=PLATFORMS_MAX_Y),
@@ -234,8 +240,7 @@ impl PlatformsPlugin {
 
         let velocity = velocity.single();
         for mut platform in platforms.iter_mut() {
-            platform.translation += Vec3::new(-1.0 * time.delta_seconds(), 0.0, 0.0)
-                * Vec3::new(velocity.value.x, velocity.value.y, 0.0);
+            platform.translation.x += -2.0 * velocity.value.x * time.delta_seconds();
         }
     }
 }

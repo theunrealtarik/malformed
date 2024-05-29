@@ -7,32 +7,27 @@ use bevy_egui::EguiContext;
 
 pub use bevy_inspector_egui::prelude::*;
 pub use bevy_inspector_egui::quick::{
-    FilterQueryInspectorPlugin, ResourceInspectorPlugin, StateInspectorPlugin, WorldInspectorPlugin,
+    FilterQueryInspectorPlugin, StateInspectorPlugin, WorldInspectorPlugin,
 };
 
 use crate::*;
 
 use super::entities::camera::Focus;
+use super::entities::player::Being;
 
 pub struct DebugPlugin;
-
-#[derive(Default, Reflect, Resource, InspectorOptions)]
-struct DebugStates {
-    game_state: GameState,
-    assets: GameAssetsState,
-    camera_focus: Focus,
-}
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(debug_assertions)]
         {
-            app.init_resource::<DebugStates>()
-                .add_plugins(ResourceInspectorPlugin::<DebugStates>::new());
-
             app.add_plugins(WorldInspectorPlugin::default())
                 .add_plugins(FrameTimeDiagnosticsPlugin)
-                .add_systems(Update, Self::inspector_ui);
+                .add_systems(Update, Self::inspector_ui)
+                .add_plugins(StateInspectorPlugin::<GameState>::default())
+                .add_plugins(StateInspectorPlugin::<GameAssetsState>::default())
+                .add_plugins(StateInspectorPlugin::<Focus>::default())
+                .add_plugins(StateInspectorPlugin::<Being>::default());
         }
     }
 }

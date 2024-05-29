@@ -9,7 +9,7 @@ pub struct Background;
 #[derive(Component)]
 pub struct Layer;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 struct Depth(usize);
 
 #[derive(Bundle)]
@@ -44,7 +44,14 @@ pub struct BackgroundPlugin;
 impl Plugin for BackgroundPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup);
-        app.add_systems(Update, Self::update.run_if(in_state(GameState::Game)));
+        app.add_systems(
+            Update,
+            Self::update
+                .run_if(in_state(GameState::Resumed))
+                .run_if(in_state(Being::Alive)),
+        );
+
+        app.register_type::<Depth>();
     }
 }
 
@@ -96,7 +103,7 @@ impl BackgroundPlugin {
                 }
 
                 transform.translation.x -=
-                    (velocity.value.x / (4.0 * depth.0 as f32)) * time.delta_seconds();
+                    (velocity.value.x / (depth.0 as f32)) * time.delta_seconds();
             }
         }
     }

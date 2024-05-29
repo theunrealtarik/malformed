@@ -1,34 +1,23 @@
 use bevy::prelude::*;
 
-use crate::TextureAssets;
+use crate::{GameAssetsState, GameState, TextureAssets};
 
-use super::assets::{FontsAssets, GameAssetsState};
-
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States, Reflect)]
-#[allow(dead_code)]
-pub enum GameState {
-    #[default]
-    Menu,
-    Game,
-}
+#[derive(Component)]
+struct Menu;
 
 pub struct GameMenuPlugin;
-
 impl Plugin for GameMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
             .add_systems(
                 Update,
                 Self::wait
-                    .run_if(in_state(GameState::Menu))
+                    .run_if(in_state(GameState::Paused))
                     .run_if(in_state(GameAssetsState::Loaded)),
             )
-            .add_systems(Update, Self::start.run_if(in_state(GameState::Menu)));
+            .add_systems(Update, Self::start.run_if(in_state(GameState::Paused)));
     }
 }
-
-#[derive(Component)]
-struct Menu;
 
 impl GameMenuPlugin {
     fn wait(
@@ -59,7 +48,7 @@ impl GameMenuPlugin {
         for mut visibility in query.iter_mut() {
             if input.just_pressed(KeyCode::Space) {
                 *visibility = Visibility::Hidden;
-                game_state.set(GameState::Game);
+                game_state.set(GameState::Resumed);
             }
         }
     }

@@ -53,7 +53,7 @@ impl Plugin for GameCameraPlugin {
                         .run_if(in_state(MovementType::Running)),
                     Self::set_focus_on_player.run_if(in_state(Focus::Menu)),
                 )
-                    .run_if(in_state(GameState::Game)),
+                    .run_if(in_state(GameState::Resumed)),
             );
     }
 }

@@ -1,7 +1,6 @@
+use crate::GameAssetsState;
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-
-use crate::plugins::debug::*;
 
 pub struct GameAssetsPlugin;
 
@@ -16,14 +15,6 @@ impl Plugin for GameAssetsPlugin {
                 .load_collection::<AudioAssets>(),
         );
     }
-}
-
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States, Reflect, InspectorOptions)]
-#[reflect(InspectorOptions)]
-pub enum GameAssetsState {
-    #[default]
-    Pending,
-    Loaded,
 }
 
 #[derive(AssetCollection, Resource)]

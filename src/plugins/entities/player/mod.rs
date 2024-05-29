@@ -24,18 +24,76 @@ pub const PLAYER_JUMP_HEIGHT: f32 = 200.0;
 
 const PLAYER_WALKING_TIMER: Duration = Duration::from_secs(10);
 
-pub const PLAYER_MAX_VELOCITY_X: f32 = 800.0;
-const PLAYER_VELOCITY_BUMP: f32 = 150.0;
-const INITIAL_PLAYER_VELOCITY_X: f32 = 80.0;
-const INITIAL_PLAYER_ACCECLERATION_X: f32 = 50.0;
+pub const PLAYER_MAX_VELOCITY_X: f32 = 1000.0;
+pub const PLAYER_VELOCITY_BUMP: f32 = 150.0;
+pub const INITIAL_PLAYER_VELOCITY_X: f32 = 80.0;
+const INITIAL_PLAYER_ACCECLERATION_X: f32 = 65.0;
 
 const PLAYER_JUMP_WINDOW: f32 = 0.3;
 
-#[derive(Component)]
+#[derive(Bundle, Default)]
+struct PlayerBundle {
+    pub sprite: Sprite,
+    pub transform: Transform,
+    pub global_transform: GlobalTransform,
+    pub texture: Handle<Image>,
+    pub atlas: TextureAtlas,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub name: Name,
+    pub animation_controller: PlayerAnimationController,
+    pub rigidbody: RigidBody,
+    pub collider: Collider,
+    pub jump: Jump,
+    pub mass_properties: AdditionalMassProperties,
+    pub read_mass_properties: ReadMassProperties,
+    pub locked_axes: LockedAxes,
+    pub sleeping: Sleeping,
+    pub velocity: Velocity,
+    pub auxiliary_velocity: AuxiliaryVelocity,
+    pub auxiliary_acceleration: AuxiliaryAcceleration,
+    pub gravity_scale: GravityScale,
+    pub responsive: Responsive,
+    pub tag: Player,
+    pub walking_timer: WalkingTimer,
+}
+
+impl PlayerBundle {
+    fn new(
+        texture: Handle<Image>,
+        layout: Handle<TextureAtlasLayout>,
+        index: usize,
+    ) -> PlayerBundle {
+        PlayerBundle {
+            name: Name::new("Player"),
+            texture,
+            atlas: TextureAtlas { layout, index },
+            transform: Transform {
+                translation: Vec3::new(0.0, -200.0, 10.0),
+                scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
+                ..Default::default()
+            },
+            rigidbody: RigidBody::Dynamic,
+            collider: Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, PLAYER_COLLIDER_HEIGHT / 2.0),
+            sleeping: Sleeping::disabled(),
+            gravity_scale: GravityScale(1.0),
+            mass_properties: AdditionalMassProperties::Mass(PLAYER_MASS),
+            read_mass_properties: ReadMassProperties::default(),
+            auxiliary_velocity: AuxiliaryVelocity {
+                value: Vec2::new(INITIAL_PLAYER_VELOCITY_X, 0.0),
+            },
+            walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Component, Default)]
 pub struct Player;
 
 #[derive(Component)]
-pub struct PlayerChild;
+pub struct PlayerGrounded;
 
 #[derive(Component, Reflect, Default)]
 pub struct AuxiliaryVelocity {
@@ -69,7 +127,7 @@ pub struct Jump {
     rising: bool,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct WalkingTimer(Timer);
 
 #[derive(Reflect, InspectorOptions, Default, States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -109,29 +167,29 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
-            .init_state::<PlayerAnimation>()
+        app.init_state::<PlayerAnimation>()
             .init_state::<MovementType>()
+            .init_state::<Being>()
+            .add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
+            .add_systems(OnEnter(GameState::Resumed), Self::toggle_visibility)
             .add_systems(
                 Update,
                 (
                     Self::set_animations,
+                    Self::update,
                     Self::control_animations.run_if(in_state(GameAssetsState::Loaded)),
-                    (
-                        (Self::movement, Self::jump).run_if(in_state(MovementType::Running)),
-                        Self::update,
-                    )
-                        .run_if(in_state(GameState::Game)),
-                ),
+                    (Self::movement, Self::jump)
+                        .run_if(in_state(MovementType::Running))
+                        .run_if(in_state(Being::Alive)),
+                )
+                    .run_if(in_state(GameState::Resumed)),
             )
-            .add_systems(OnEnter(GameState::Game), Self::toggle_visibility)
-            .init_state::<Being>()
+            .add_systems(Update, Self::being.run_if(in_state(GameState::Resumed)))
             .register_type::<PlayerAnimation>()
             .register_type::<PlayerAnimationController>()
             .register_type::<AuxiliaryVelocity>()
             .register_type::<AuxiliaryAcceleration>()
-            .register_type::<Jump>()
-            .add_plugins(StateInspectorPlugin::<MovementType>::default());
+            .register_type::<Jump>();
     }
 }
 
@@ -142,47 +200,11 @@ impl PlayerPlugin {
         layouts: Res<SpriteLayouts>,
     ) {
         commands
-            .spawn(SpriteSheetBundle {
-                texture: textures.player.clone(),
-                atlas: TextureAtlas {
-                    layout: layouts.player_layout.clone(),
-                    index: 0,
-                },
-                transform: Transform {
-                    translation: Vec3::new(0.0, -200.0, 10.0),
-                    scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
-                    ..Default::default()
-                },
-                visibility: Visibility::Hidden,
-                ..Default::default()
-            })
-            .insert(Name::new("Player"))
-            .insert(PlayerAnimationController {
-                curr_animation: PlayerAnimation::Walking,
-            })
-            .insert(RigidBody::Dynamic)
-            .insert(Collider::cuboid(
-                PLAYER_COLLIDER_WIDTH / 2.0,
-                PLAYER_COLLIDER_HEIGHT / 2.0,
+            .spawn(PlayerBundle::new(
+                textures.player.clone(),
+                layouts.player_layout.clone(),
+                0,
             ))
-            .insert(AdditionalMassProperties::Mass(PLAYER_MASS))
-            .insert(KinematicCharacterController::default())
-            .insert(LockedAxes::ROTATION_LOCKED)
-            .insert(Sleeping::disabled())
-            .insert(Velocity::default())
-            .insert(GravityScale(1.0))
-            .insert(ReadMassProperties::default())
-            .insert(Responsive)
-            .insert(Player)
-            .insert(AuxiliaryAcceleration::default())
-            .insert(AuxiliaryVelocity {
-                value: Vec2::new(INITIAL_PLAYER_VELOCITY_X, 0.0),
-            })
-            .insert(WalkingTimer(Timer::new(
-                PLAYER_WALKING_TIMER,
-                TimerMode::Once,
-            )))
-            .insert(Jump::default())
             .with_children(|commands| {
                 commands
                     .spawn(Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, 2.0))
@@ -195,7 +217,7 @@ impl PlayerPlugin {
                     .insert(Sleeping::disabled())
                     .insert(Name::new("Ground Check"))
                     .insert(Grounded::new(false))
-                    .insert(PlayerChild);
+                    .insert(PlayerGrounded);
             });
     }
 
@@ -209,7 +231,9 @@ impl PlayerPlugin {
         mut next_controlable: ResMut<NextState<MovementType>>,
         time: Res<Time>,
     ) {
-        let (mut timer, mut velocity) = query.single_mut();
+        let Ok((mut timer, mut velocity)) = query.get_single_mut() else {
+            return;
+        };
 
         let tick = timer.0.tick(time.delta());
         let velocity_x = &mut velocity.value.x;
@@ -220,7 +244,26 @@ impl PlayerPlugin {
 
         if tick.finished() && *velocity_x < PLAYER_VELOCITY_BUMP {
             *velocity_x +=
-                (PLAYER_VELOCITY_BUMP - *velocity_x) * (1.0 - time.delta_seconds().powi(9));
+                (PLAYER_VELOCITY_BUMP - *velocity_x) * (1.0 - time.delta_seconds().powi(12));
+        }
+    }
+
+    fn being(
+        mut commands: Commands,
+        mut next_being: ResMut<NextState<Being>>,
+        player: Query<(Entity, &Transform), With<Player>>,
+    ) {
+        let Ok((entity, transform)) = player.get_single() else {
+            return;
+        };
+
+        let mut die = || {
+            next_being.set(Being::Dead);
+            commands.entity(entity).despawn_recursive();
+        };
+
+        if transform.translation.y <= -800.0 {
+            die();
         }
     }
 
@@ -278,7 +321,7 @@ impl PlayerPlugin {
             ),
             With<Animation>,
         >,
-        player_children: Query<&Grounded, With<PlayerChild>>,
+        player_children: Query<&Grounded, With<PlayerGrounded>>,
     ) {
         if player.is_empty() {
             return;
@@ -318,7 +361,7 @@ impl PlayerPlugin {
             ),
             With<Player>,
         >,
-        children: Query<&Grounded, With<PlayerChild>>,
+        children: Query<&Grounded, With<PlayerGrounded>>,
         input: Res<ButtonInput<KeyCode>>,
         time: Res<Time>,
         rules: Res<RapierConfiguration>,
@@ -371,5 +414,22 @@ impl PlayerPlugin {
                 jump.rising = false;
             }
         }
+    }
+
+    pub fn restart(
+        mut query: Query<(&mut Visibility, &mut AuxiliaryVelocity), With<Player>>,
+        mut next_movement: ResMut<NextState<MovementType>>,
+    ) {
+        if query.is_empty() {
+            return;
+        }
+
+        let (mut visible, mut velocity) = query.single_mut();
+        *visible = Visibility::Visible;
+        *velocity = AuxiliaryVelocity {
+            value: Vec2::new(INITIAL_PLAYER_VELOCITY_X + PLAYER_VELOCITY_BUMP, 0.0),
+        };
+
+        next_movement.set(MovementType::Running);
     }
 }

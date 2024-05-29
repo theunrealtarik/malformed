@@ -25,8 +25,11 @@ where
     G: Component,
 {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, Self::check_ground.run_if(in_state(GameState::Game)))
-            .register_type::<Grounded>();
+        app.add_systems(
+            Update,
+            Self::check_ground.run_if(in_state(GameState::Resumed)),
+        )
+        .register_type::<Grounded>();
     }
 }
 
