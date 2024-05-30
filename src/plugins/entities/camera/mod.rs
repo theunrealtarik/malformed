@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy_rapier2d::na;
+use glib::utils::easings;
 
 use super::player::*;
 use crate::GameState;
@@ -72,6 +74,12 @@ impl GameCameraPlugin {
             if transform.translation.y >= 0.0 {
                 transform.translation.y -= CAMERA_STARTING_POSITIION.y
                     * (1.0 - time.delta_seconds().powf(10f32.powf(-f32::exp(1.0))));
+
+                let ease =
+                    easings::expo(0.3, time.delta_seconds(), 10f32.powf(-1.0 * f32::exp(1.0)));
+
+                transform.scale.x = na::clamp(transform.scale.x - ease, 0.3, 1.0);
+                transform.scale.y = na::clamp(transform.scale.y - ease, 0.3, 1.0);
             } else {
                 next_foucs.set(Focus::Player);
             }
@@ -85,13 +93,21 @@ impl GameCameraPlugin {
     ) {
         for player_transform in player.iter() {
             for mut camera_transform in camera.iter_mut() {
+                let ease_scale = easings::expo(0.3, 0.05_f32, time.delta_seconds());
+
+                camera_transform.scale.x =
+                    na::clamp(camera_transform.scale.x + ease_scale, 0.3, 1.0);
+                camera_transform.scale.y =
+                    na::clamp(camera_transform.scale.y + ease_scale, 0.3, 1.0);
+
                 let target = player_transform.translation
                     + Vec3::new(CAMERA_PLAYER_OFFSET.x, CAMERA_PLAYER_OFFSET.y, 0.0);
 
                 let cam = &mut camera_transform.translation;
                 let delta = target - *cam;
 
-                *cam += delta * (1.0 - 0.05_f32.powf(time.delta_seconds()));
+                cam.x += easings::expo(delta.x, 0.05_f32, time.delta_seconds());
+                cam.y += easings::expo(delta.y, 0.05_f32, time.delta_seconds());
             }
         }
     }

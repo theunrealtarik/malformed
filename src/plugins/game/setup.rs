@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     window::{PresentMode, WindowMode, WindowResolution},
 };
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -40,6 +41,7 @@ impl Plugin for GameEssentialsPlugin {
                         ..Default::default()
                     })
                     .set(ImagePlugin::default_nearest()),
+                EmbeddedAssetPlugin::default(),
                 AudioPlugin,
             ))
             .add_systems(PostStartup, Self::rescale_sprites);

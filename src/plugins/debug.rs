@@ -2,9 +2,9 @@ use std::marker::PhantomData;
 
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::EguiContext;
+use bevy_rapier2d::prelude::*;
 
 pub use bevy_inspector_egui::prelude::*;
 pub use bevy_inspector_egui::quick::{

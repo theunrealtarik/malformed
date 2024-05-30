@@ -19,4 +19,10 @@ pub mod utils {
             0.0,
         );
     }
+
+    pub mod easings {
+        pub fn expo(scalar: f32, rate: f32, intv: f32) -> f32 {
+            scalar * (1.0 - rate.powf(intv))
+        }
+    }
 }

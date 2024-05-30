@@ -1,35 +1,16 @@
-use std::time::Duration;
+mod components;
+mod config;
+mod states;
+
+pub use components::*;
+pub use config::*;
+pub use states::*;
 
 use bevy::prelude::*;
-// use bevy_rapier2d::na;
 use bevy_rapier2d::prelude::*;
 
-use crate::plugins::debug::*;
 use crate::plugins::game::ground::*;
 use crate::*;
-
-const PLAYER_SCALE_X: f32 = 2.0;
-const PLAYER_SCALE_Y: f32 = 2.0;
-const PLAYER_MASS: f32 = 100.0;
-
-const PLAYER_COLLIDER_WIDTH: f32 = 24.0;
-const PLAYER_COLLIDER_HEIGHT: f32 = 36.0;
-
-const PLAYER_RISE_GRAVITY: f32 = 1.0;
-const PLAYER_FALL_GRAVITY: f32 = 1.8;
-
-const PLAYER_COYOTE_JUMP_TIME: f32 = 0.35;
-const PLAYER_JUMP_BUFFERING_TIME: f32 = 0.3;
-pub const PLAYER_JUMP_HEIGHT: f32 = 200.0;
-
-const PLAYER_WALKING_TIMER: Duration = Duration::from_secs(10);
-
-pub const PLAYER_MAX_VELOCITY_X: f32 = 1000.0;
-pub const PLAYER_VELOCITY_BUMP: f32 = 150.0;
-pub const INITIAL_PLAYER_VELOCITY_X: f32 = 80.0;
-const INITIAL_PLAYER_ACCECLERATION_X: f32 = 65.0;
-
-const PLAYER_JUMP_WINDOW: f32 = 0.3;
 
 #[derive(Bundle, Default)]
 struct PlayerBundle {
@@ -84,94 +65,23 @@ impl PlayerBundle {
                 value: Vec2::new(INITIAL_PLAYER_VELOCITY_X, 0.0),
             },
             walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
+            visibility: Visibility::Visible,
             ..Default::default()
         }
     }
-}
-
-#[derive(Component, Default)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct PlayerGrounded;
-
-#[derive(Component, Reflect, Default)]
-pub struct AuxiliaryVelocity {
-    pub value: Vec2,
-}
-
-#[derive(Component, Reflect, Default)]
-pub struct AuxiliaryAcceleration {
-    pub value: Vec2,
-}
-
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
-pub enum MovementType {
-    Running,
-    #[default]
-    Walking,
-}
-
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
-pub enum Being {
-    Dead,
-    #[default]
-    Alive,
-}
-
-#[derive(Component, Reflect, Default)]
-pub struct Jump {
-    coyote: f32,
-    buffering: f32,
-    press: f32,
-    rising: bool,
-}
-
-#[derive(Component, Default)]
-pub struct WalkingTimer(Timer);
-
-#[derive(Reflect, InspectorOptions, Default, States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[reflect(InspectorOptions)]
-enum PlayerAnimation {
-    #[default]
-    Idle,
-    Walking,
-    Running,
-    Rising,
-    Falling,
-}
-
-impl PlayerAnimation {
-    fn animation(self) -> Animation {
-        match self {
-            Self::Idle => Animation::default(Frame::range(0, 9)),
-            Self::Walking => Animation::default(Frame::range(10, 17)),
-            Self::Running => Animation::default(Frame::range(20, 27)),
-            Self::Rising => {
-                Animation::new(DEFAULT_CYCLE_DELAY, Frame::range(30, 31), TimerMode::Once)
-            }
-            Self::Falling => {
-                Animation::new(DEFAULT_CYCLE_DELAY, Frame::range(32, 32), TimerMode::Once)
-            }
-        }
-    }
-}
-
-#[derive(Component, Reflect, InspectorOptions, Default)]
-#[reflect(InspectorOptions)]
-pub struct PlayerAnimationController {
-    curr_animation: PlayerAnimation,
 }
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        // states
         app.init_state::<PlayerAnimation>()
             .init_state::<MovementType>()
-            .init_state::<Being>()
-            .add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
-            .add_systems(OnEnter(GameState::Resumed), Self::toggle_visibility)
+            .init_state::<Being>();
+        // systems
+        app.add_systems(OnEnter(GameAssetsState::Loaded), Self::setup)
+            .add_systems(OnEnter(GameState::Resumed), Self::setup_dialog_text)
             .add_systems(
                 Update,
                 (
@@ -184,8 +94,9 @@ impl Plugin for PlayerPlugin {
                 )
                     .run_if(in_state(GameState::Resumed)),
             )
-            .add_systems(Update, Self::being.run_if(in_state(GameState::Resumed)))
-            .register_type::<PlayerAnimation>()
+            .add_systems(Update, Self::being.run_if(in_state(GameState::Resumed)));
+        // types
+        app.register_type::<PlayerAnimation>()
             .register_type::<PlayerAnimationController>()
             .register_type::<AuxiliaryVelocity>()
             .register_type::<AuxiliaryAcceleration>()
@@ -219,11 +130,6 @@ impl PlayerPlugin {
                     .insert(Grounded::new(false))
                     .insert(PlayerGrounded);
             });
-    }
-
-    fn toggle_visibility(mut player: Query<&mut Visibility, With<Player>>) {
-        let mut visibility = player.single_mut();
-        *visibility = Visibility::Visible;
     }
 
     fn update(
@@ -431,5 +337,32 @@ impl PlayerPlugin {
         };
 
         next_movement.set(MovementType::Running);
+    }
+
+    pub fn setup_dialog_text(mut commands: Commands, fonts: Res<FontsAssets>) {
+        commands
+            .spawn(
+                TextBundle::from_section(
+                    "",
+                    TextStyle {
+                        font: fonts.vcr.clone(),
+                        font_size: 34.0,
+                        color: Color::WHITE,
+                    },
+                )
+                .with_style(Style {
+                    justify_self: JustifySelf::Center,
+                    align_self: AlignSelf::End,
+                    margin: UiRect::bottom(Val::Px(50.0)),
+                    ..Default::default()
+                }),
+            )
+            .insert(Name::new("Self Dialog"))
+            .insert(Dialog::new(
+                DIALOG_LINES
+                    .iter()
+                    .map(|(content, duration)| Line::new(content, *duration))
+                    .collect::<Vec<Line>>(),
+            ));
     }
 }

@@ -146,7 +146,7 @@ impl PlatformsPlugin {
                 },
                 transform: Transform {
                     translation: Vec3::new(RTE_X, RTE_Y, 20.0),
-                    scale: Vec3::new(2.0, 2.0, 0.0),
+                    scale: Vec3::new(5.0, 5.0, 0.0),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -154,15 +154,14 @@ impl PlatformsPlugin {
             .insert(Name::new("Cabinet"))
             .insert(Scrollable)
             .insert(Cabinet)
-            .insert(Sensor)
             .with_children(|commands| {
                 commands
                     .spawn(Collider::cuboid(10.0, 5.0))
                     .insert(Sensor)
                     .insert(TransformBundle {
                         local: Transform {
-                            translation: Vec3::new(52.3, 10.0, 0.0),
-                            scale: Vec3::new(0.4, 3.0, 0.0),
+                            translation: Vec3::new(27.0, 14.5, 0.0),
+                            scale: Vec3::new(0.4, 4.0, 0.0),
                             ..Default::default()
                         },
                         ..Default::default()
