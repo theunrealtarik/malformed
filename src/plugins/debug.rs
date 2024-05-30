@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::EguiContext;
 
@@ -22,6 +23,7 @@ impl Plugin for DebugPlugin {
         #[cfg(debug_assertions)]
         {
             app.add_plugins(WorldInspectorPlugin::default())
+                .add_plugins(RapierDebugRenderPlugin::default())
                 .add_plugins(FrameTimeDiagnosticsPlugin)
                 .add_systems(Update, Self::inspector_ui)
                 .add_plugins(StateInspectorPlugin::<GameState>::default())

@@ -403,7 +403,7 @@ impl PlayerPlugin {
 
             if jump.press < PLAYER_JUMP_WINDOW && input.just_released(KeyCode::Space) {
                 commands.entity(entity).insert(ExternalImpulse {
-                    impulse: Vec2::new(0.0, -0.35 * jump_magnitude),
+                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-1.0) * jump_magnitude),
                     torque_impulse: 0.0,
                 });
                 jump.press = 0.0;

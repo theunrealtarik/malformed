@@ -4,6 +4,7 @@ pub mod ground;
 pub mod menu;
 pub mod restart;
 pub mod setup;
+pub mod soundtrack;
 pub mod states;
 
 pub mod prelude {
@@ -16,5 +17,6 @@ pub mod prelude {
     pub use super::menu::*;
     pub use super::restart::*;
     pub use super::setup::*;
+    pub use super::soundtrack::*;
     pub use super::states::*;
 }

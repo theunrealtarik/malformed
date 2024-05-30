@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-mod obstacles;
+// mod obstacles;
 mod platforms;
 
-pub use obstacles::*;
+// pub use obstacles::*;
 pub use platforms::*;
 
 pub struct TerrainPlugin;
