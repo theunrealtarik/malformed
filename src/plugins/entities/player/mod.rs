@@ -284,7 +284,7 @@ impl PlayerPlugin {
             if jump.press < PLAYER_JUMP_WINDOW && input.just_released(KeyCode::Space) {
                 jump.press = 0.0;
                 commands.entity(entity).insert(ExternalImpulse {
-                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-0.8) * jump_magnitude),
+                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-0.9) * jump_magnitude),
                     torque_impulse: 0.0,
                 });
             }
