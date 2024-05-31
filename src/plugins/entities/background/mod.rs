@@ -20,6 +20,8 @@ struct LayerBundle {
 }
 
 const BACKGROUND_IMAGE_WIDTH: f32 = 4608.0;
+const BACKGROUND_LAYER_Y: f32 = 512.0;
+const BACKGROUND_LAYER_SACLE: f32 = 2.0;
 // const BACKGROUND_IMAGE_HEIGHT: f32 = 512.0;
 
 impl LayerBundle {
@@ -27,7 +29,11 @@ impl LayerBundle {
         Self {
             sprite: SpriteBundle {
                 texture,
-                transform: Transform::from_xyz(0.0, 0.0, depth as f32),
+                transform: Transform {
+                    translation: Vec3::new(0.0, BACKGROUND_LAYER_Y, -1.0 * depth as f32),
+                    scale: Vec3::new(BACKGROUND_LAYER_SACLE, BACKGROUND_LAYER_SACLE, 0.0),
+                    ..Default::default()
+                },
                 sprite: Sprite {
                     anchor: Anchor::TopCenter,
                     ..Default::default()
@@ -58,36 +64,32 @@ impl Plugin for BackgroundPlugin {
 impl BackgroundPlugin {
     pub fn setup(mut commands: Commands, textures: Res<TextureAssets>) {
         let bg_images = [
-            ("Clouds", textures.bg_cloud_0.clone()),
-            ("Buildings", textures.bg_buildings_0.clone()),
-            ("Clouds", textures.bg_cloud_1.clone()),
             ("Buildings", textures.bg_buildings_1.clone()),
+            ("Clouds", textures.bg_cloud_1.clone()),
+            ("Buildings", textures.bg_buildings_0.clone()),
+            ("Clouds", textures.bg_cloud_0.clone()),
         ];
 
-        commands
-            .spawn(Background)
-            .insert(Name::new("Background"))
-            .insert(TransformBundle {
-                local: Transform {
-                    translation: Vec3::new(0.0, 512.0, 0.0),
-                    scale: Vec3::new(3.0, 3.0, 0.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .insert(InheritedVisibility::default())
-            .with_children(|commands| {
-                for (depth, (name, texture)) in bg_images.iter().enumerate() {
-                    commands
-                        .spawn(LayerBundle::new(
-                            name,
-                            texture.clone(),
-                            bg_images.len() - depth,
-                        ))
-                        .insert(Layer)
-                        .insert(Responsive);
-                }
-            });
+        // commands
+        //     .spawn(Background)
+        //     .insert(Name::new("Background"))
+        //     .insert(TransformBundle {
+        //         local: Transform {
+        //             translation: Vec3::new(0.0, 512.0, 0.0),
+        //             scale: Vec3::new(3.0, 3.0, 0.0),
+        //             ..Default::default()
+        //         },
+        //         ..Default::default()
+        //     })
+        //     .insert(InheritedVisibility::default())
+        //     .with_children(|commands| {});
+
+        for (depth, (name, texture)) in bg_images.iter().enumerate() {
+            commands
+                .spawn(LayerBundle::new(name, texture.clone(), depth + 1))
+                .insert(Layer)
+                .insert(Responsive);
+        }
     }
 
     fn update(
@@ -97,7 +99,7 @@ impl BackgroundPlugin {
     ) {
         if let Ok(velocity) = player_velocity.get_single() {
             for (mut transform, depth) in layers.iter_mut() {
-                let frame = (1.0 / 3.0) * BACKGROUND_IMAGE_WIDTH;
+                let frame = (transform.scale.x / 3.0) * BACKGROUND_IMAGE_WIDTH;
                 if transform.translation.x <= frame * -1.0 {
                     transform.translation.x = frame;
                 }

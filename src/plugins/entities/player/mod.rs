@@ -1,9 +1,11 @@
 mod components;
 mod config;
+mod plugins;
 mod states;
 
 pub use components::*;
 pub use config::*;
+pub use plugins::*;
 pub use states::*;
 
 use bevy::prelude::*;
@@ -11,65 +13,6 @@ use bevy_rapier2d::prelude::*;
 
 use crate::plugins::game::ground::*;
 use crate::*;
-
-#[derive(Bundle, Default)]
-struct PlayerBundle {
-    pub sprite: Sprite,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub texture: Handle<Image>,
-    pub atlas: TextureAtlas,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
-    pub name: Name,
-    pub animation_controller: PlayerAnimationController,
-    pub rigidbody: RigidBody,
-    pub collider: Collider,
-    pub jump: Jump,
-    pub mass_properties: AdditionalMassProperties,
-    pub read_mass_properties: ReadMassProperties,
-    pub locked_axes: LockedAxes,
-    pub sleeping: Sleeping,
-    pub velocity: Velocity,
-    pub auxiliary_velocity: AuxiliaryVelocity,
-    pub auxiliary_acceleration: AuxiliaryAcceleration,
-    pub gravity_scale: GravityScale,
-    pub responsive: Responsive,
-    pub tag: Player,
-    pub walking_timer: WalkingTimer,
-}
-
-impl PlayerBundle {
-    fn new(
-        texture: Handle<Image>,
-        layout: Handle<TextureAtlasLayout>,
-        index: usize,
-    ) -> PlayerBundle {
-        PlayerBundle {
-            name: Name::new("Player"),
-            texture,
-            atlas: TextureAtlas { layout, index },
-            transform: Transform {
-                translation: Vec3::new(0.0, -200.0, 10.0),
-                scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
-                ..Default::default()
-            },
-            rigidbody: RigidBody::Dynamic,
-            collider: Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, PLAYER_COLLIDER_HEIGHT / 2.0),
-            sleeping: Sleeping::disabled(),
-            gravity_scale: GravityScale(1.0),
-            mass_properties: AdditionalMassProperties::Mass(PLAYER_MASS),
-            read_mass_properties: ReadMassProperties::default(),
-            auxiliary_velocity: AuxiliaryVelocity {
-                value: Vec2::new(INITIAL_PLAYER_VELOCITY_X, 0.0),
-            },
-            walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
-            visibility: Visibility::Visible,
-            ..Default::default()
-        }
-    }
-}
 
 pub struct PlayerPlugin;
 
@@ -101,6 +44,9 @@ impl Plugin for PlayerPlugin {
             .register_type::<AuxiliaryVelocity>()
             .register_type::<AuxiliaryAcceleration>()
             .register_type::<Jump>();
+        // plugins
+        app.add_plugins(PlayerStaminaPlugin);
+        app.add_plugins(PlayerScorePlugin);
     }
 }
 
@@ -174,18 +120,27 @@ impl PlayerPlugin {
     }
 
     fn movement(
-        mut query: Query<(&mut AuxiliaryVelocity, &mut AuxiliaryAcceleration), With<Player>>,
+        mut query: Query<
+            (
+                &mut AuxiliaryVelocity,
+                &mut AuxiliaryAcceleration,
+                &mut Score,
+            ),
+            With<Player>,
+        >,
         time: Res<Time>,
     ) {
         if query.is_empty() {
             return;
         }
 
-        let (mut velocity, mut acceleration) = query.single_mut();
+        let (mut velocity, mut acceleration, mut score) = query.single_mut();
 
         velocity.value.x += acceleration.value.x * time.delta_seconds();
         acceleration.value.x =
-            INITIAL_PLAYER_ACCECLERATION_X * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X);
+            PLAYER_INIT_VELOCITY_X * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X);
+
+        score.value += (velocity.value.x / 100f32) * time.delta_seconds();
     }
 
     fn control_animations(
@@ -240,7 +195,7 @@ impl PlayerPlugin {
             if aux_velocity.value.x == 0.0 {
                 controller.curr_animation = PlayerAnimation::Idle;
             } else if aux_velocity.value.x != 0.0
-                && aux_velocity.value.x < INITIAL_PLAYER_VELOCITY_X + PLAYER_VELOCITY_BUMP
+                && aux_velocity.value.x < PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP
             {
                 controller.curr_animation = PlayerAnimation::Walking;
             } else {
@@ -333,7 +288,7 @@ impl PlayerPlugin {
         let (mut visible, mut velocity) = query.single_mut();
         *visible = Visibility::Visible;
         *velocity = AuxiliaryVelocity {
-            value: Vec2::new(INITIAL_PLAYER_VELOCITY_X + PLAYER_VELOCITY_BUMP, 0.0),
+            value: Vec2::new(PLAYER_RESPAWN_VELOCITY, 0.0),
         };
 
         next_movement.set(MovementType::Running);
@@ -364,5 +319,70 @@ impl PlayerPlugin {
                     .map(|(content, duration)| Line::new(content, *duration))
                     .collect::<Vec<Line>>(),
             ));
+    }
+}
+
+#[derive(Bundle, Default)]
+struct PlayerBundle {
+    pub sprite: Sprite,
+    pub transform: Transform,
+    pub global_transform: GlobalTransform,
+    pub texture: Handle<Image>,
+    pub atlas: TextureAtlas,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub name: Name,
+    pub animation_controller: PlayerAnimationController,
+    pub rigidbody: RigidBody,
+    pub collider: Collider,
+    pub jump: Jump,
+    pub mass_properties: AdditionalMassProperties,
+    pub read_mass_properties: ReadMassProperties,
+    pub locked_axes: LockedAxes,
+    pub sleeping: Sleeping,
+    pub velocity: Velocity,
+    pub auxiliary_velocity: AuxiliaryVelocity,
+    pub auxiliary_acceleration: AuxiliaryAcceleration,
+    pub gravity_scale: GravityScale,
+    pub responsive: Responsive,
+    pub tag: Player,
+    pub walking_timer: WalkingTimer,
+    // stats
+    pub stamina: Stamina,
+    pub score: Score,
+}
+
+impl PlayerBundle {
+    fn new(
+        texture: Handle<Image>,
+        layout: Handle<TextureAtlasLayout>,
+        index: usize,
+    ) -> PlayerBundle {
+        PlayerBundle {
+            name: Name::new("Player"),
+            texture,
+            atlas: TextureAtlas { layout, index },
+            transform: Transform {
+                translation: Vec3::new(0.0, -200.0, 10.0),
+                scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
+                ..Default::default()
+            },
+            rigidbody: RigidBody::Dynamic,
+            collider: Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, PLAYER_COLLIDER_HEIGHT / 2.0),
+            sleeping: Sleeping::disabled(),
+            gravity_scale: GravityScale(1.0),
+            mass_properties: AdditionalMassProperties::Mass(PLAYER_MASS),
+            read_mass_properties: ReadMassProperties::default(),
+            auxiliary_velocity: AuxiliaryVelocity {
+                value: Vec2::new(PLAYER_INIT_VELOCITY_X, 0.0),
+            },
+            walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
+            visibility: Visibility::Visible,
+            stamina: Stamina {
+                value: PLAYER_MAX_STAMINA,
+            },
+            ..Default::default()
+        }
     }
 }

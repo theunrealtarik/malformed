@@ -14,7 +14,7 @@ pub use bevy_inspector_egui::quick::{
 use crate::*;
 
 use super::entities::camera::Focus;
-use super::entities::player::Being;
+use super::entities::player::{Being, MovementType};
 
 pub struct DebugPlugin;
 
@@ -29,7 +29,8 @@ impl Plugin for DebugPlugin {
                 .add_plugins(StateInspectorPlugin::<GameState>::default())
                 .add_plugins(StateInspectorPlugin::<GameAssetsState>::default())
                 .add_plugins(StateInspectorPlugin::<Focus>::default())
-                .add_plugins(StateInspectorPlugin::<Being>::default());
+                .add_plugins(StateInspectorPlugin::<Being>::default())
+                .add_plugins(StateInspectorPlugin::<MovementType>::default());
         }
     }
 }

@@ -53,6 +53,8 @@ pub struct FontsAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct AudioAssets {
+    #[asset(path = "embedded://audio/ambience.ogg")]
+    pub ambience: Handle<AudioSource>,
     #[asset(path = "embedded://audio/init_segment.ogg")]
     pub intial_segment: Handle<AudioSource>,
     #[asset(path = "embedded://audio/loop_0.ogg")]

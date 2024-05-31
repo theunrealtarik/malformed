@@ -8,9 +8,10 @@ use plugins::debug::*;
 
 use self::plugins::entities::player::*;
 
-const PLATFORMS_MAX_Y: f32 = PLAYER_JUMP_HEIGHT * 0.5 + PLATFORMS_MIN_Y;
+// those values were randomly picked LOL
+const PLATFORMS_MAX_Y: f32 = PLAYER_JUMP_HEIGHT * 0.4 + PLATFORMS_MIN_Y;
 const PLATFORMS_MIN_Y: f32 = -640.0;
-const PLATFORMS_MAX_SPACING: f32 = 400.0;
+const PLATFORMS_MAX_SPACING: f32 = 500.0;
 const PLATFORMS_MIN_SPACING: f32 = 100.0;
 const PLATFORMS_MAX_WIDTH: f32 = 1000.0;
 const PLATFORMS_MIN_WIDTH: f32 = 500.0;
@@ -198,8 +199,7 @@ impl PlatformsPlugin {
                 + PLATFORMS_MIN_WIDTH;
 
             let spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
-                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth
-                + PLATFORMS_MIN_SPACING;
+                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth;
 
             let height = prev.height;
             let next_platform = Platform {

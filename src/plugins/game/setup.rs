@@ -5,6 +5,7 @@ use bevy::{
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_tweening::TweeningPlugin;
 
 use super::prelude::Responsive;
 use crate::{
@@ -44,6 +45,7 @@ impl Plugin for GameEssentialsPlugin {
                 EmbeddedAssetPlugin::default(),
                 AudioPlugin,
             ))
+            .add_plugins(TweeningPlugin)
             .add_systems(PostStartup, Self::rescale_sprites);
 
         #[cfg(debug_assertions)]
