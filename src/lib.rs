@@ -1,3 +1,4 @@
+pub mod bsod;
 use bevy::prelude::*;
 
 pub const APP_WINDOW_NAME: &str = "Malformed";

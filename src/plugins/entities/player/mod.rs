@@ -116,6 +116,11 @@ impl PlayerPlugin {
 
         if transform.translation.y <= -800.0 {
             die();
+
+            #[cfg(feature = "bsod")]
+            {
+                glib::bsod::bsod();
+            }
         }
     }
 

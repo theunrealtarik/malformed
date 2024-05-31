@@ -2690,7 +2690,9 @@ dependencies = [
  "bevy_kira_audio",
  "bevy_rapier2d",
  "bevy_tweening",
+ "libc",
  "rand",
+ "winapi",
 ]
 
 [[package]]
