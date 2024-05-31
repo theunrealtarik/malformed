@@ -18,7 +18,7 @@ pub(super) const PLAYER_WALKING_TIMER: Duration = Duration::from_secs(6);
 
 pub(crate) const PLAYER_RESPAWN_VELOCITY: f32 =
     (PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP) * 2.0;
-pub(crate) const PLAYER_MAX_VELOCITY_X: f32 = 1000.0;
+pub(crate) const PLAYER_MAX_VELOCITY_X: f32 = 1200.0;
 pub(crate) const PLAYER_VELOCITY_BUMP: f32 = 150.0;
 pub(crate) const PLAYER_INIT_VELOCITY_X: f32 = 80.0;
 

@@ -225,6 +225,7 @@ impl PlayerPlugin {
                 Entity,
                 &ReadMassProperties,
                 &Velocity,
+                &AuxiliaryVelocity,
                 &mut Jump,
                 &mut GravityScale,
                 &mut Stamina,
@@ -240,7 +241,8 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mass, velocity, mut jump, mut gravity, mut stamina) = player.single_mut();
+        let (entity, mass, velocity, aux_velocity, mut jump, mut gravity, mut stamina) =
+            player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
@@ -276,7 +278,7 @@ impl PlayerPlugin {
         if jump.rising {
             jump.press += time.delta_seconds();
             stamina.value = na::clamp(
-                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE * -1.1,
+                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE * -1.5,
                 0.0,
                 PLAYER_MAX_STAMINA,
             );
