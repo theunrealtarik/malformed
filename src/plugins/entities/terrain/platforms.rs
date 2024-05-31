@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use bevy_rapier2d::prelude::*;
 
 use rand::prelude::*;
@@ -117,6 +117,20 @@ impl PlatformsPlugin {
 
         let left = width / -2.0;
 
+        commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(36.0 / 255.0, 43.0 / 255.0, 54.0 / 255.0),
+                anchor: Anchor::TopCenter,
+                ..Default::default()
+            },
+            transform: Transform {
+                translation: Vec3::new(0.0, -300.0, 1.0),
+                scale: Vec3::new(4000.0, 2000.0, 1.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+
         commands.spawn(PlatformBundle::new(
             Color::BLACK,
             None,
@@ -192,14 +206,14 @@ impl PlatformsPlugin {
         };
 
         if platforms.len() < WORLD_MAX_PLATFORMS as usize {
-            let growth = 1.0 + velocity.value.x / PLAYER_MAX_VELOCITY_X;
+            let growth = |dir: f32| 1.0 + dir * velocity.value.x / PLAYER_MAX_VELOCITY_X;
 
             let width = (PLATFORMS_MAX_WIDTH - PLATFORMS_MIN_WIDTH)
-                + rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH) * growth
+                + rng.gen_range(PLATFORMS_MIN_WIDTH..=PLATFORMS_MAX_WIDTH) * growth(1.0)
                 + PLATFORMS_MIN_WIDTH;
 
             let spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
-                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth;
+                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth(1.0);
 
             let height = prev.height;
             let next_platform = Platform {

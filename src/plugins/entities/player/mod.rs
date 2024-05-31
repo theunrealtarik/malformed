@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 mod components;
 mod config;
 mod plugins;
@@ -9,6 +11,7 @@ pub use plugins::*;
 pub use states::*;
 
 use bevy::prelude::*;
+use bevy_rapier2d::na;
 use bevy_rapier2d::prelude::*;
 
 use crate::plugins::game::ground::*;
@@ -220,10 +223,11 @@ impl PlayerPlugin {
         mut player: Query<
             (
                 Entity,
-                &mut Jump,
                 &ReadMassProperties,
-                &mut GravityScale,
                 &Velocity,
+                &mut Jump,
+                &mut GravityScale,
+                &mut Stamina,
             ),
             With<Player>,
         >,
@@ -236,11 +240,16 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mut jump, mass, mut gravity, velocity) = player.single_mut();
+        let (entity, mass, velocity, mut jump, mut gravity, mut stamina) = player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
             jump.coyote = PLAYER_COYOTE_JUMP_TIME;
+            stamina.value = na::clamp(
+                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE,
+                0.0,
+                PLAYER_MAX_STAMINA,
+            );
         } else {
             jump.coyote -= time.delta_seconds();
         }
@@ -254,7 +263,7 @@ impl PlayerPlugin {
         }
 
         let jump_magnitude = mass.get().mass * (PLAYER_JUMP_HEIGHT * rules.gravity.y * -2.0).sqrt();
-        if jump.buffering > 0.0 && jump.coyote > 0.0 {
+        if jump.buffering > 0.0 && jump.coyote > 0.0 && stamina.value > 0.0 {
             commands.entity(entity).insert(ExternalImpulse {
                 impulse: Vec2::new(0.0, jump_magnitude),
                 torque_impulse: 0.0,
@@ -266,13 +275,18 @@ impl PlayerPlugin {
 
         if jump.rising {
             jump.press += time.delta_seconds();
+            stamina.value = na::clamp(
+                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE * -1.1,
+                0.0,
+                PLAYER_MAX_STAMINA,
+            );
 
             if jump.press < PLAYER_JUMP_WINDOW && input.just_released(KeyCode::Space) {
+                jump.press = 0.0;
                 commands.entity(entity).insert(ExternalImpulse {
-                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-1.0) * jump_magnitude),
+                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-0.8) * jump_magnitude),
                     torque_impulse: 0.0,
                 });
-                jump.press = 0.0;
             }
 
             if velocity.linvel.y < 0.0 {

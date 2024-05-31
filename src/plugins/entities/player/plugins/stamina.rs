@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy_tweening::{lens::UiPositionLens, *};
+use bevy_tweening::*;
 
-use crate::plugins::entities::player::MovementType;
+use super::super::*;
 
 #[derive(Debug, Default, Component, Reflect)]
 pub struct Stamina {
@@ -18,6 +18,7 @@ pub(in super::super) struct PlayerStaminaPlugin;
 impl Plugin for PlayerStaminaPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(MovementType::Running), Self::setup)
+            .add_systems(FixedUpdate, Self::update)
             .register_type::<Stamina>();
     }
 }
@@ -75,6 +76,21 @@ impl PlayerStaminaPlugin {
                             .insert(StaminaBar);
                     });
             });
+    }
+
+    pub fn update(
+        stamina: Query<&Stamina, With<Player>>,
+        mut stamina_bar: Query<&mut Style, With<StaminaBar>>,
+    ) {
+        let Ok(stamina) = stamina.get_single() else {
+            return;
+        };
+
+        let Ok(mut stamina_bar) = stamina_bar.get_single_mut() else {
+            return;
+        };
+
+        stamina_bar.width = Val::Percent(stamina.value / PLAYER_MAX_STAMINA * 100.0);
     }
 }
 

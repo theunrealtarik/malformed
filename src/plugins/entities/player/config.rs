@@ -24,7 +24,7 @@ pub(crate) const PLAYER_INIT_VELOCITY_X: f32 = 80.0;
 
 pub const PLAYER_JUMP_WINDOW: f32 = 0.3;
 
-pub(crate) const PLAYER_MAX_STAMINA: f32 = 100.0;
+pub(crate) const PLAYER_MAX_STAMINA: f32 = 30.0;
 pub(crate) const PLAYER_STAMINA_RECOVERY_RATE: f32 = 20.0;
 
 pub(super) static DIALOG_LINES: [(&str, Duration); 4] = [
@@ -39,6 +39,6 @@ pub(super) static DIALOG_LINES: [(&str, Duration); 4] = [
     ),
     (
         "i don't want another blue screen ...",
-        Duration::from_secs(3),
+        Duration::from_secs(2),
     ),
 ];
