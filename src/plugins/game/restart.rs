@@ -20,7 +20,8 @@ impl Plugin for GameRestartPlugin {
                 to: Being::Alive,
             },
             (
-                PlatformsPlugin::setup,
+                BuildingsPlugin::setup,
+                EnvironmentPlugin::setup,
                 (PlayerPlugin::setup, PlayerPlugin::restart).chain(),
             )
                 .chain(),

@@ -25,7 +25,7 @@ pub struct AuxiliaryAcceleration {
     pub value: Vec2,
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct WalkingTimer(pub Timer);
 
 #[derive(Component, Default, Reflect)]

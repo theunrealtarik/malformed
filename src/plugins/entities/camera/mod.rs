@@ -8,8 +8,7 @@ use crate::GameState;
 #[derive(Component)]
 pub struct MainCamera;
 
-const CAMERA_STARTING_POSITIION: Vec2 = Vec2::new(0.0, 512.0);
-const CAMERA_PLAYER_OFFSET: Vec2 = Vec2::new(512.0, 256.0);
+use glib::*;
 
 #[derive(Bundle)]
 pub struct MainCameraBundle {

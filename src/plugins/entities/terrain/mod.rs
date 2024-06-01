@@ -1,38 +1,30 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use bevy_rapier2d::prelude::*;
 
+use glib::*;
+
+#[derive(Component, Reflect, Clone, Copy, Debug, Default)]
+pub struct Platform {
+    pub coords: (f32, f32),
+    pub width: f32,
+}
+
+#[derive(Component)]
+pub struct Scrollable;
+
 // mod obstacles;
-mod platforms;
+mod buildings;
+mod env;
 
 // pub use obstacles::*;
-pub use platforms::*;
+pub use buildings::*;
+pub use env::*;
 
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PlatformsPlugin)
-            .add_systems(Update, Self::open_door);
-    }
-}
-
-impl TerrainPlugin {
-    fn open_door(
-        player: Query<Entity, With<crate::plugins::entities::player::Player>>,
-        door: Query<Entity, With<Door>>,
-        mut cabinet: Query<(Entity, &mut TextureAtlas), With<Cabinet>>,
-        ctx: Res<RapierContext>,
-    ) {
-        if let (Ok(player), Ok(door), Ok((_, mut atlas))) = (
-            player.get_single(),
-            door.get_single(),
-            cabinet.get_single_mut(),
-        ) {
-            if ctx.intersection_pair(player, door) == Some(true) {
-                atlas.index = 1;
-            } else {
-                atlas.index = 0;
-            }
-        }
+        app.add_plugins(BuildingsPlugin)
+            .add_plugins(EnvironmentPlugin);
     }
 }

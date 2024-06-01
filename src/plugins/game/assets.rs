@@ -28,11 +28,20 @@ pub struct TextureAssets {
     pub bg_cloud_0: Handle<Image>,
     #[asset(path = "embedded://background/background_scaled_0001_cloud_1.png")]
     pub bg_cloud_1: Handle<Image>,
+
+    #[asset(path = "embedded://terrain/right.png")]
+    pub building_right: Handle<Image>,
+    #[asset(path = "embedded://terrain/left.png")]
+    pub building_left: Handle<Image>,
+    #[asset(path = "embedded://terrain/middle.png")]
+    pub building_middle: Handle<Image>,
+    #[asset(path = "embedded://terrain/board.png")]
+    pub street_board: Handle<Image>,
+    #[asset(path = "embedded://terrain/cabinet.png")]
+    pub cabinet: Handle<Image>,
     #[asset(image(sampler = nearest))]
     #[asset(path = "embedded://player.png")]
     pub player: Handle<Image>,
-    #[asset(path = "embedded://cabinet.png")]
-    pub cabinet: Handle<Image>,
     #[asset(path = "embedded://pts.png")]
     pub pts: Handle<Image>,
 }
@@ -41,7 +50,7 @@ pub struct TextureAssets {
 pub struct SpriteLayouts {
     #[asset(texture_atlas_layout(tile_size_x = 48.0, tile_size_y = 48.9, columns = 10, rows = 4))]
     pub player_layout: Handle<TextureAtlasLayout>,
-    #[asset(texture_atlas_layout(tile_size_x = 72.0, tile_size_y = 45.0, columns = 1, rows = 2))]
+    #[asset(texture_atlas_layout(tile_size_x = 110.0, tile_size_y = 65.0, columns = 1, rows = 2))]
     pub cabinet_layout: Handle<TextureAtlasLayout>,
 }
 

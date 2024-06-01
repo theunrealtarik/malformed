@@ -1,12 +1,12 @@
 #![allow(clippy::all)]
 
+use glib::*;
+
 mod components;
-mod config;
 mod plugins;
 mod states;
 
 pub use components::*;
-pub use config::*;
 pub use plugins::*;
 pub use states::*;
 
@@ -46,6 +46,7 @@ impl Plugin for PlayerPlugin {
             .register_type::<PlayerAnimationController>()
             .register_type::<AuxiliaryVelocity>()
             .register_type::<AuxiliaryAcceleration>()
+            .register_type::<WalkingTimer>()
             .register_type::<Jump>();
         // plugins
         app.add_plugins(PlayerStaminaPlugin);
@@ -117,7 +118,7 @@ impl PlayerPlugin {
             commands.entity(entity).despawn_recursive();
         };
 
-        if transform.translation.y <= -800.0 {
+        if transform.translation.y < PLATFORMS_MIN_Y {
             die();
 
             #[cfg(feature = "bsod")]
@@ -241,8 +242,7 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mass, velocity, aux_velocity, mut jump, mut gravity, mut stamina) =
-            player.single_mut();
+        let (entity, mass, velocity, _, mut jump, mut gravity, mut stamina) = player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
@@ -299,15 +299,14 @@ impl PlayerPlugin {
     }
 
     pub fn restart(
-        mut query: Query<(&mut Visibility, &mut AuxiliaryVelocity), With<Player>>,
+        mut query: Query<&mut AuxiliaryVelocity, With<Player>>,
         mut next_movement: ResMut<NextState<MovementType>>,
     ) {
         if query.is_empty() {
             return;
         }
 
-        let (mut visible, mut velocity) = query.single_mut();
-        *visible = Visibility::Visible;
+        let mut velocity = query.single_mut();
         *velocity = AuxiliaryVelocity {
             value: Vec2::new(PLAYER_RESPAWN_VELOCITY, 0.0),
         };
@@ -345,14 +344,7 @@ impl PlayerPlugin {
 
 #[derive(Bundle, Default)]
 struct PlayerBundle {
-    pub sprite: Sprite,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub texture: Handle<Image>,
-    pub atlas: TextureAtlas,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
+    pub spritesheet: SpriteSheetBundle,
     pub name: Name,
     pub animation_controller: PlayerAnimationController,
     pub rigidbody: RigidBody,
@@ -375,31 +367,33 @@ struct PlayerBundle {
 }
 
 impl PlayerBundle {
-    fn new(
-        texture: Handle<Image>,
-        layout: Handle<TextureAtlasLayout>,
-        index: usize,
-    ) -> PlayerBundle {
-        PlayerBundle {
+    fn new(texture: Handle<Image>, layout: Handle<TextureAtlasLayout>, index: usize) -> Self {
+        Self {
             name: Name::new("Player"),
-            texture,
-            atlas: TextureAtlas { layout, index },
-            transform: Transform {
-                translation: Vec3::new(0.0, -200.0, 10.0),
-                scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
+            spritesheet: SpriteSheetBundle {
+                texture,
+                atlas: TextureAtlas { layout, index },
+                transform: Transform {
+                    translation: Vec3::new(0.0, -200.0, 10.0),
+                    scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
+            // physics related
             rigidbody: RigidBody::Dynamic,
+            locked_axes: LockedAxes::ROTATION_LOCKED,
             collider: Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, PLAYER_COLLIDER_HEIGHT / 2.0),
             sleeping: Sleeping::disabled(),
             gravity_scale: GravityScale(1.0),
             mass_properties: AdditionalMassProperties::Mass(PLAYER_MASS),
             read_mass_properties: ReadMassProperties::default(),
+            // virtual movement
             auxiliary_velocity: AuxiliaryVelocity {
                 value: Vec2::new(PLAYER_INIT_VELOCITY_X, 0.0),
             },
             walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
-            visibility: Visibility::Visible,
+            // stats
             stamina: Stamina {
                 value: PLAYER_MAX_STAMINA,
             },

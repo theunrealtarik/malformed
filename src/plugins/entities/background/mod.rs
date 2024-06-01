@@ -1,7 +1,8 @@
-use bevy::{prelude::*, sprite::Anchor};
-
 use crate::plugins::entities::player::*;
 use crate::plugins::game::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
+
+use glib::*;
 
 #[derive(Component)]
 pub struct Background;
@@ -18,11 +19,6 @@ struct LayerBundle {
     depth: Depth,
     name: Name,
 }
-
-const BACKGROUND_IMAGE_WIDTH: f32 = 4608.0;
-const BACKGROUND_LAYER_Y: f32 = 512.0;
-const BACKGROUND_LAYER_SACLE: f32 = 2.0;
-// const BACKGROUND_IMAGE_HEIGHT: f32 = 512.0;
 
 impl LayerBundle {
     fn new(name: &'static str, texture: Handle<Image>, depth: usize) -> Self {
@@ -64,25 +60,25 @@ impl Plugin for BackgroundPlugin {
 impl BackgroundPlugin {
     pub fn setup(mut commands: Commands, textures: Res<TextureAssets>) {
         let bg_images = [
-            ("Buildings", textures.bg_buildings_1.clone()),
-            ("Clouds", textures.bg_cloud_1.clone()),
-            ("Buildings", textures.bg_buildings_0.clone()),
-            ("Clouds", textures.bg_cloud_0.clone()),
+            ("Background Buildings", textures.bg_buildings_1.clone()),
+            ("Background Clouds", textures.bg_cloud_1.clone()),
+            ("Background Buildings", textures.bg_buildings_0.clone()),
+            ("Background Clouds", textures.bg_cloud_0.clone()),
         ];
 
-        // commands
-        //     .spawn(Background)
-        //     .insert(Name::new("Background"))
-        //     .insert(TransformBundle {
-        //         local: Transform {
-        //             translation: Vec3::new(0.0, 512.0, 0.0),
-        //             scale: Vec3::new(3.0, 3.0, 0.0),
-        //             ..Default::default()
-        //         },
-        //         ..Default::default()
-        //     })
-        //     .insert(InheritedVisibility::default())
-        //     .with_children(|commands| {});
+        commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(36.0 / 255.0, 43.0 / 255.0, 54.0 / 255.0),
+                anchor: Anchor::TopCenter,
+                ..Default::default()
+            },
+            transform: Transform {
+                translation: Vec3::new(0.0, PLATFORMS_MIN_Y, 1.0),
+                scale: Vec3::new(4000.0, 2000.0, 1.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
 
         for (depth, (name, texture)) in bg_images.iter().enumerate() {
             commands
