@@ -807,7 +807,7 @@ dependencies = [
  "kira",
  "parking_lot",
  "thiserror",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -930,7 +930,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.66",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -1007,7 +1007,7 @@ dependencies = [
  "bevy_utils",
  "serde",
  "thiserror",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -1153,7 +1153,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "tracing",
- "uuid",
+ "uuid 1.8.0",
  "web-time",
 ]
 
@@ -1776,6 +1776,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "discord-rich-presence"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f632a41e3e97febf8edff46b1405f9875894c29e20a25c5abe566872226b3f84"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "uuid 0.8.2",
+]
+
+[[package]]
 name = "dispatch"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2124,7 +2136,7 @@ dependencies = [
  "fnv",
  "gilrs-core",
  "log",
- "uuid",
+ "uuid 1.8.0",
  "vec_map",
 ]
 
@@ -2142,7 +2154,7 @@ dependencies = [
  "libudev-sys",
  "log",
  "nix",
- "uuid",
+ "uuid 1.8.0",
  "vec_map",
  "wasm-bindgen",
  "web-sys",
@@ -2690,9 +2702,11 @@ dependencies = [
  "bevy_kira_audio",
  "bevy_rapier2d",
  "bevy_tweening",
+ "discord-rich-presence",
  "libc",
  "rand",
  "winapi",
+ "winres",
 ]
 
 [[package]]
@@ -4089,6 +4103,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "toml"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "toml_datetime"
 version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4264,6 +4287,15 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+]
+
+[[package]]
+name = "uuid"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom",
 ]
 
 [[package]]
@@ -5024,6 +5056,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "winres"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b68db261ef59e9e52806f688020631e987592bd83619edccda9c47d42cde4f6c"
+dependencies = [
+ "toml",
 ]
 
 [[package]]

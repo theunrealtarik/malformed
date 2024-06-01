@@ -2,6 +2,7 @@
 name = "malformed"
 version = "0.1.0"
 edition = "2021"
+homepage = "https://github.com/theunrealtarik/malformed"
 
 [lib]
 name = "glib"
@@ -22,6 +23,10 @@ rand = "0.8.5"
 bevy_tweening = "0.10.0"
 libc = "0.2.155"
 winapi = { version = "0.3", features = ["winuser"] }
+discord-rich-presence = "0.2.4"
+
+[build-dependencies]
+winres = "0.1.12"
 
 [profile.dev]
 opt-level = 1

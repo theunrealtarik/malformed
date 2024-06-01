@@ -3,6 +3,10 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
+pub static DISCORD_APP_ID: &str = "1246393574065442837";
+pub static DISCORD_STATE: &str = "Malformed";
+pub static DISCORD_LARGE_IMAGE: &str = "default";
+
 pub const APP_WINDOW_NAME: &str = "Malformed";
 pub const APP_WINDOW_MIN_WIDTH: f32 = 600.0;
 pub const APP_WINDOW_MIN_HEIGHT: f32 = 400.0;

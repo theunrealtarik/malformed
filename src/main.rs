@@ -16,6 +16,7 @@ fn main() {
         .add_plugins(BackgroundPlugin)
         .add_plugins(TerrainPlugin)
         .add_plugins(PlayerPlugin)
+        .add_plugins(RPCPlugin)
         .add_plugins(DialogPlugin)
         .run();
 }
