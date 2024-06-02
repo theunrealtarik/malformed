@@ -3,7 +3,7 @@
 ![malformed banner](https://github.com/theunrealtarik/malformed/assets/58333332/2f277cf7-32a9-4263-b81b-e0302dc5fd8d)
 
 > [!WARNING]
-> This game is a piece of software that will entirely crash your computer whenever you lose which can lead to hardware-level damage and lose of any progress of some ongoing work.
+> This game is a piece of software that will entirely crash your computer whenever you lose which can lead to hardware-level damage and loss of any progress of some ongoing work.
 
 
 ## Download
