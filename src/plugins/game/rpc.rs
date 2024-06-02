@@ -3,7 +3,7 @@ use discord_rich_presence::{
     activity::{self, Assets, Button},
     DiscordIpc, DiscordIpcClient,
 };
-use glib::{DISCORD_APP_ID, DISCORD_LARGE_IMAGE, DISCORD_STATE};
+use glib::{ DISCORD_LARGE_IMAGE, DISCORD_STATE};
 
 #[derive(Resource)]
 pub struct DiscordRPC {
@@ -13,7 +13,7 @@ pub struct DiscordRPC {
 impl Default for DiscordRPC {
     fn default() -> Self {
         Self {
-            client: DiscordIpcClient::new(DISCORD_APP_ID).unwrap(),
+            client: DiscordIpcClient::new(env!("DISCORD_APP_ID")).unwrap(),
         }
     }
 }
