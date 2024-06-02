@@ -44,6 +44,8 @@ pub struct TextureAssets {
     pub player: Handle<Image>,
     #[asset(path = "embedded://pts.png")]
     pub pts: Handle<Image>,
+    #[asset(path = "embedded://bytes.png")]
+    pub byte: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -52,6 +54,8 @@ pub struct SpriteLayouts {
     pub player_layout: Handle<TextureAtlasLayout>,
     #[asset(texture_atlas_layout(tile_size_x = 110.0, tile_size_y = 65.0, columns = 1, rows = 2))]
     pub cabinet_layout: Handle<TextureAtlasLayout>,
+    #[asset(texture_atlas_layout(tile_size_x = 8.0, tile_size_y = 8.0, columns = 9, rows = 9))]
+    pub byte_layout: Handle<TextureAtlasLayout>,
 }
 
 #[derive(AssetCollection, Resource)]

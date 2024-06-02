@@ -15,6 +15,7 @@ fn main() {
         .add_plugins(GameRestartPlugin)
         .add_plugins(BackgroundPlugin)
         .add_plugins(TerrainPlugin)
+        .add_plugins(BytesPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(RPCPlugin)
         .add_plugins(DialogPlugin)

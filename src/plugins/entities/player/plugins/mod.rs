@@ -1,5 +1,5 @@
+mod memory;
 mod score;
-mod stamina;
 
+pub use memory::*;
 pub use score::*;
-pub use stamina::*;

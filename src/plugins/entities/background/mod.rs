@@ -66,19 +66,21 @@ impl BackgroundPlugin {
             ("Background Clouds", textures.bg_cloud_0.clone()),
         ];
 
-        commands.spawn(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(36.0 / 255.0, 43.0 / 255.0, 54.0 / 255.0),
-                anchor: Anchor::TopCenter,
+        commands
+            .spawn(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(36.0 / 255.0, 43.0 / 255.0, 54.0 / 255.0),
+                    anchor: Anchor::TopCenter,
+                    ..Default::default()
+                },
+                transform: Transform {
+                    translation: Vec3::new(0.0, -512.0, 1.0),
+                    scale: Vec3::new(4000.0, 2000.0, -1.0),
+                    ..Default::default()
+                },
                 ..Default::default()
-            },
-            transform: Transform {
-                translation: Vec3::new(0.0, PLATFORMS_MIN_Y, 1.0),
-                scale: Vec3::new(4000.0, 2000.0, 1.0),
-                ..Default::default()
-            },
-            ..Default::default()
-        });
+            })
+            .insert(Name::new("Background Patch"));
 
         for (depth, (name, texture)) in bg_images.iter().enumerate() {
             commands

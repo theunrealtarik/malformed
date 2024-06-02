@@ -1,29 +1,40 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_rapier2d::na;
 use bevy_tweening::*;
 
 use super::super::*;
 
 #[derive(Debug, Default, Component, Reflect)]
-pub struct Stamina {
+pub struct Memory {
     pub value: f32,
 }
 
 #[derive(Debug, Default, Component, Reflect)]
-pub struct StaminaBar;
+pub struct SanityBar;
 
-pub(in super::super) struct PlayerStaminaPlugin;
+#[derive(Debug, Default, Component, Reflect)]
+pub struct MemoryTimer(pub Timer);
 
-impl Plugin for PlayerStaminaPlugin {
+pub(in super::super) struct PlayerMemoryPlugin;
+
+impl Plugin for PlayerMemoryPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(MovementType::Running), Self::setup)
             .add_systems(FixedUpdate, Self::update)
-            .register_type::<Stamina>();
+            .add_systems(
+                Update,
+                Self::drain
+                    .run_if(in_state(GameState::Resumed))
+                    .run_if(in_state(MovementType::Running)),
+            )
+            .register_type::<Memory>()
+            .register_type::<MemoryTimer>();
     }
 }
 
-impl PlayerStaminaPlugin {
+impl PlayerMemoryPlugin {
     pub fn setup(mut commands: Commands, window: Query<&Window>) {
         let window = window.single();
 
@@ -49,7 +60,7 @@ impl PlayerStaminaPlugin {
                 ..default()
             })
             .insert(Animator::new(tween))
-            .insert(Name::new("Stamina Container"))
+            .insert(Name::new("Memory Container"))
             .with_children(|commands| {
                 commands
                     .spawn(NodeBundle {
@@ -61,7 +72,7 @@ impl PlayerStaminaPlugin {
                         background_color: Color::rgba(0.0, 0.0, 0.0, 0.7).into(),
                         ..default()
                     })
-                    .insert(Name::new("Stamina"))
+                    .insert(Name::new("Memory"))
                     .with_children(|commands| {
                         commands
                             .spawn(NodeBundle {
@@ -73,24 +84,36 @@ impl PlayerStaminaPlugin {
                                 background_color: Color::WHITE.into(),
                                 ..Default::default()
                             })
-                            .insert(StaminaBar);
+                            .insert(SanityBar);
                     });
             });
     }
 
     pub fn update(
-        stamina: Query<&Stamina, With<Player>>,
-        mut stamina_bar: Query<&mut Style, With<StaminaBar>>,
+        memory: Query<&Memory, With<Player>>,
+        mut bar: Query<&mut Style, With<SanityBar>>,
     ) {
-        let Ok(stamina) = stamina.get_single() else {
+        let Ok(memory) = memory.get_single() else {
             return;
         };
 
-        let Ok(mut stamina_bar) = stamina_bar.get_single_mut() else {
+        let Ok(mut bar) = bar.get_single_mut() else {
             return;
         };
 
-        stamina_bar.width = Val::Percent(stamina.value / PLAYER_MAX_STAMINA * 100.0);
+        bar.width = Val::Percent(memory.value / PLAYER_MAX_MEMORY * 100.0);
+    }
+
+    pub fn drain(mut query: Query<(&mut Memory, &mut MemoryTimer)>, time: Res<Time>) {
+        for (mut memory, mut timer) in query.iter_mut() {
+            if timer.0.tick(time.delta()).just_finished() {
+                memory.value = na::clamp(
+                    memory.value - PLAYER_MEMORY_DRAINING_RATE,
+                    0.0,
+                    PLAYER_MAX_VELOCITY_X,
+                );
+            }
+        }
     }
 }
 

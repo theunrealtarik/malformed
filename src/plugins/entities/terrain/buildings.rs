@@ -3,12 +3,10 @@ use bevy_rapier2d::prelude::*;
 use glib::WORLD_SPRITE_SCALE;
 use rand::Rng;
 
-use self::plugins::debug::EntityInspector;
-
 use super::*;
 use crate::*;
 
-use plugins::entities::player::*;
+use crate::plugins::debug::*;
 
 #[derive(Default)]
 pub struct BuildingsPlugin;
@@ -19,7 +17,7 @@ impl Plugin for BuildingsPlugin {
             .add_systems(Update, Self::despawn)
             .add_systems(
                 Update,
-                (Self::scroll, Self::genereate)
+                (Self::scroll, Self::generate)
                     .run_if(in_state(GameState::Resumed))
                     .run_if(in_state(Being::Alive)),
             )
@@ -39,10 +37,11 @@ impl BuildingsPlugin {
             8.0 * BUILDING_WIDTH,
             PLATFORMS_MIN_Y,
             1.0,
-        );
+        )
+        .insert(PreventByte);
     }
 
-    fn genereate(
+    pub fn generate(
         mut commands: Commands,
         mut platforms: Query<(&Platform, &Transform)>,
         textures: Res<TextureAssets>,
@@ -110,19 +109,19 @@ pub struct Building {
 }
 
 impl Building {
-    pub fn spawn(
-        commands: &mut Commands,
-        textures: &Res<TextureAssets>,
+    pub fn spawn<'a>(
+        commands: &'a mut Commands,
+        textures: &'a Res<TextureAssets>,
         reps: usize,
         pos_x: f32,
         pos_y: f32,
         pos_z: f32,
-    ) {
+    ) -> bevy::ecs::system::EntityCommands<'a> {
         let reps = reps + 2;
         let width = reps as f32 * BUILDING_WIDTH;
 
-        commands
-            .spawn(Name::new("Building"))
+        let mut entity_commands = commands.spawn(Name::new("Building"));
+        entity_commands
             .insert(Visibility::Visible)
             .insert(InheritedVisibility::default())
             .insert(TransformBundle {
@@ -164,5 +163,7 @@ impl Building {
                         .insert(Anchor::TopCenter);
                 }
             });
+
+        entity_commands
     }
 }

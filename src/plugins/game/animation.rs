@@ -47,6 +47,19 @@ impl Animation {
     pub fn default(frames: Vec<Frame>) -> Self {
         Self::new(DEFAULT_CYCLE_DELAY, frames, TimerMode::Repeating)
     }
+
+    pub fn auto(duration: Duration, mode: TimerMode, frames_count: usize) -> Self {
+        let mut frames = Vec::new();
+
+        for index in 0..frames_count {
+            frames.push(Frame { duration, index })
+        }
+
+        Self {
+            timer: Timer::new(duration, mode),
+            frames,
+        }
+    }
 }
 
 #[derive(Component, Debug, PartialEq, Eq, Reflect)]

@@ -10,7 +10,9 @@ pub mod sounds;
 pub mod states;
 
 pub mod prelude {
-    #[derive(bevy::prelude::Component, Default)]
+    use bevy::prelude::*;
+
+    #[derive(Component, Default)]
     pub struct Responsive;
 
     pub use super::animation::*;

@@ -19,35 +19,41 @@ pub const WORLD_SPRITE_SCALE: Vec3 = Vec3::new(2.0, 2.0, 1.0);
 // player
 pub const PLAYER_SCALE_X: f32 = WORLD_SPRITE_SCALE.x;
 pub const PLAYER_SCALE_Y: f32 = WORLD_SPRITE_SCALE.y;
-pub const PLAYER_MASS: f32 = 100.0;
+pub const PLAYER_MASS: f32 = 300.0;
 pub const PLAYER_COLLIDER_WIDTH: f32 = 24.0;
 pub const PLAYER_COLLIDER_HEIGHT: f32 = 34.0;
 pub const PLAYER_RISE_GRAVITY: f32 = 1.0;
-pub const PLAYER_FALL_GRAVITY: f32 = 1.8;
+pub const PLAYER_FALL_GRAVITY: f32 = 2.8;
 pub const PLAYER_COYOTE_JUMP_TIME: f32 = 0.35;
 pub const PLAYER_JUMP_BUFFERING_TIME: f32 = 0.3;
 pub const PLAYER_JUMP_HEIGHT: f32 = 200.0;
 pub const PLAYER_WALKING_TIMER: Duration = Duration::from_secs(6);
+pub const PLAYER_INIT_VELOCITY_X: f32 = 100.0;
+pub const PLAYER_INIT_ACCELERATION_X: f32 = 80.0;
 pub const PLAYER_RESPAWN_VELOCITY: f32 = (PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP) * 2.0;
-pub const PLAYER_MAX_VELOCITY_X: f32 = 1200.0;
+pub const PLAYER_MAX_VELOCITY_X: f32 = 1500.0;
 pub const PLAYER_VELOCITY_BUMP: f32 = 150.0;
-pub const PLAYER_INIT_VELOCITY_X: f32 = 80.0;
-pub const PLAYER_JUMP_WINDOW: f32 = 0.3;
-pub const PLAYER_MAX_STAMINA: f32 = 30.0;
-pub const PLAYER_STAMINA_RECOVERY_RATE: f32 = 20.0;
+pub const PLAYER_JUMP_WINDOW: f32 = 0.35;
+
+pub const PLAYER_MAX_MEMORY: f32 = 100.0;
+pub const PLAYER_MEMORY_DRAINING_RATE: f32 = 5.0;
+pub const PLAYER_MEMORY_REGEN_RATE: f32 = 10.0;
 
 pub static DIALOG_LINES: [(&str, Duration); 4] = [
-    ("that cursed komboter again... F$@!", Duration::from_secs(3)),
     (
-        "i can't believe it can't even handle booting up",
+        "THAT CURSED KOMBOTER AGAIN... F***!",
         Duration::from_secs(3),
     ),
     (
-        "i gottta hurry and get those parts asap",
+        "I CAN'T BELIEVE IT CAN'T EVEN HANDLE BOOTING UP",
         Duration::from_secs(3),
     ),
     (
-        "i don't want another blue screen ...",
+        "I NEED TO HURRY AND GET THOSE PARTS ASAP",
+        Duration::from_secs(3),
+    ),
+    (
+        "WE DON'T WANT ANOTHER BLUE SCREEN...",
         Duration::from_secs(2),
     ),
 ];
@@ -58,7 +64,7 @@ pub const CAMERA_PLAYER_OFFSET: Vec2 = Vec2::new(512.0, 256.0);
 
 // terrain
 pub const PLATFORMS_MAX_Y: f32 = PLAYER_JUMP_HEIGHT * 0.4 + PLATFORMS_MIN_Y;
-pub const PLATFORMS_MIN_Y: f32 = -512.0;
+pub const PLATFORMS_MIN_Y: f32 = -256.0;
 pub const PLATFORMS_MAX_SPACING: f32 = 500.0;
 pub const PLATFORMS_MIN_SPACING: f32 = 100.0;
 pub const WORLD_MAX_PLATFORMS: u8 = 10;

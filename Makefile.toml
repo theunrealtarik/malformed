@@ -1,0 +1,12 @@
+[tasks.build-release]
+condition = { profiles = ["production"] }
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.build-debug]
+command = "cargo"
+args = ["build", "--features", "bevy/dynamic_linking"]
+
+[tasks.run]
+command = "cargo"
+args = ["run", "--features", "bevy/dynamic_linking"]

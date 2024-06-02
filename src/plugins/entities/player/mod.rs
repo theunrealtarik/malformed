@@ -1,5 +1,7 @@
 #![allow(clippy::all)]
 
+use std::time::Duration;
+
 use glib::*;
 
 mod components;
@@ -11,7 +13,6 @@ pub use plugins::*;
 pub use states::*;
 
 use bevy::prelude::*;
-use bevy_rapier2d::na;
 use bevy_rapier2d::prelude::*;
 
 use crate::plugins::game::ground::*;
@@ -34,7 +35,7 @@ impl Plugin for PlayerPlugin {
                     Self::set_animations,
                     Self::update,
                     Self::control_animations.run_if(in_state(GameAssetsState::Loaded)),
-                    (Self::movement, Self::jump)
+                    (Self::movement, Self::jump, Self::collect)
                         .run_if(in_state(MovementType::Running))
                         .run_if(in_state(Being::Alive)),
                 )
@@ -49,7 +50,7 @@ impl Plugin for PlayerPlugin {
             .register_type::<WalkingTimer>()
             .register_type::<Jump>();
         // plugins
-        app.add_plugins(PlayerStaminaPlugin);
+        app.add_plugins(PlayerMemoryPlugin);
         app.add_plugins(PlayerScorePlugin);
     }
 }
@@ -66,6 +67,10 @@ impl PlayerPlugin {
                 layouts.player_layout.clone(),
                 0,
             ))
+            .insert(MemoryTimer(Timer::new(
+                Duration::from_secs(1),
+                TimerMode::Repeating,
+            )))
             .with_children(|commands| {
                 commands
                     .spawn(Collider::cuboid(PLAYER_COLLIDER_WIDTH / 2.0, 2.0))
@@ -107,9 +112,9 @@ impl PlayerPlugin {
     fn being(
         mut commands: Commands,
         mut next_being: ResMut<NextState<Being>>,
-        player: Query<(Entity, &Transform), With<Player>>,
+        player: Query<(Entity, &Transform, &Memory), With<Player>>,
     ) {
-        let Ok((entity, transform)) = player.get_single() else {
+        let Ok((entity, transform, memory)) = player.get_single() else {
             return;
         };
 
@@ -118,7 +123,7 @@ impl PlayerPlugin {
             commands.entity(entity).despawn_recursive();
         };
 
-        if transform.translation.y < PLATFORMS_MIN_Y {
+        if transform.translation.y < PLATFORMS_MIN_Y || memory.value == 0.0 {
             die();
 
             #[cfg(feature = "bsod")]
@@ -147,7 +152,7 @@ impl PlayerPlugin {
 
         velocity.value.x += acceleration.value.x * time.delta_seconds();
         acceleration.value.x =
-            PLAYER_INIT_VELOCITY_X * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X);
+            PLAYER_INIT_ACCELERATION_X * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X);
 
         score.value += (velocity.value.x / 100f32) * time.delta_seconds();
     }
@@ -229,7 +234,6 @@ impl PlayerPlugin {
                 &AuxiliaryVelocity,
                 &mut Jump,
                 &mut GravityScale,
-                &mut Stamina,
             ),
             With<Player>,
         >,
@@ -242,16 +246,11 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mass, velocity, _, mut jump, mut gravity, mut stamina) = player.single_mut();
+        let (entity, mass, velocity, _, mut jump, mut gravity) = player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
             jump.coyote = PLAYER_COYOTE_JUMP_TIME;
-            stamina.value = na::clamp(
-                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE,
-                0.0,
-                PLAYER_MAX_STAMINA,
-            );
         } else {
             jump.coyote -= time.delta_seconds();
         }
@@ -265,7 +264,7 @@ impl PlayerPlugin {
         }
 
         let jump_magnitude = mass.get().mass * (PLAYER_JUMP_HEIGHT * rules.gravity.y * -2.0).sqrt();
-        if jump.buffering > 0.0 && jump.coyote > 0.0 && stamina.value > 0.0 {
+        if jump.buffering > 0.0 && jump.coyote > 0.0 {
             commands.entity(entity).insert(ExternalImpulse {
                 impulse: Vec2::new(0.0, jump_magnitude),
                 torque_impulse: 0.0,
@@ -277,22 +276,20 @@ impl PlayerPlugin {
 
         if jump.rising {
             jump.press += time.delta_seconds();
-            stamina.value = na::clamp(
-                stamina.value + time.delta_seconds() * PLAYER_STAMINA_RECOVERY_RATE * -1.5,
-                0.0,
-                PLAYER_MAX_STAMINA,
-            );
 
-            if jump.press < PLAYER_JUMP_WINDOW && input.just_released(KeyCode::Space) {
-                jump.press = 0.0;
-                commands.entity(entity).insert(ExternalImpulse {
-                    impulse: Vec2::new(0.0, -1.0 * f32::exp(-0.9) * jump_magnitude),
-                    torque_impulse: 0.0,
-                });
+            if input.just_released(KeyCode::Space) {
+                if jump.press < PLAYER_JUMP_WINDOW {
+                    jump.press = 0.0;
+                    commands.entity(entity).insert(ExternalImpulse {
+                        impulse: Vec2::new(0.0, -1.0 * f32::exp(-0.9) * jump_magnitude),
+                        torque_impulse: 0.0,
+                    });
+                }
+
+                *gravity = GravityScale(PLAYER_FALL_GRAVITY);
             }
 
             if velocity.linvel.y < 0.0 {
-                *gravity = GravityScale(PLAYER_FALL_GRAVITY);
                 jump.rising = false;
             }
         }
@@ -340,6 +337,27 @@ impl PlayerPlugin {
                     .collect::<Vec<Line>>(),
             ));
     }
+
+    pub fn collect(
+        mut commands: Commands,
+        mut player: Query<(Entity, &mut Memory), With<Player>>,
+        time: Res<Time>,
+        bytes: Query<Entity, With<Byte>>,
+        ctx: Res<RapierContext>,
+    ) {
+        if player.is_empty() || bytes.is_empty() {
+            return;
+        }
+
+        let (player, mut memory) = player.single_mut();
+
+        for byte in bytes.iter() {
+            if ctx.intersection_pair(byte, player) == Some(true) {
+                commands.entity(byte).despawn_recursive();
+                memory.value += PLAYER_MEMORY_REGEN_RATE;
+            }
+        }
+    }
 }
 
 #[derive(Bundle, Default)]
@@ -362,7 +380,7 @@ struct PlayerBundle {
     pub tag: Player,
     pub walking_timer: WalkingTimer,
     // stats
-    pub stamina: Stamina,
+    pub memory: Memory,
     pub score: Score,
 }
 
@@ -374,7 +392,7 @@ impl PlayerBundle {
                 texture,
                 atlas: TextureAtlas { layout, index },
                 transform: Transform {
-                    translation: Vec3::new(0.0, -200.0, 10.0),
+                    translation: Vec3::new(-40.0, 40.0, 10.0),
                     scale: Vec3::new(PLAYER_SCALE_X, PLAYER_SCALE_Y, 0.0),
                     ..Default::default()
                 },
@@ -394,8 +412,8 @@ impl PlayerBundle {
             },
             walking_timer: WalkingTimer(Timer::new(PLAYER_WALKING_TIMER, TimerMode::Once)),
             // stats
-            stamina: Stamina {
-                value: PLAYER_MAX_STAMINA,
+            memory: Memory {
+                value: PLAYER_MAX_MEMORY,
             },
             ..Default::default()
         }
