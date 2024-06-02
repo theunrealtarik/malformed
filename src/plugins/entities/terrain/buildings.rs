@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::parry::shape::HeightField;
 use bevy_rapier2d::prelude::*;
 use glib::WORLD_SPRITE_SCALE;
 use rand::Rng;
@@ -98,7 +99,10 @@ impl BuildingsPlugin {
             return;
         }
 
-        let velocity = velocity.single();
+        let Ok(velocity) = velocity.get_single() else {
+            return;
+        };
+
         for mut platform in platforms.iter_mut() {
             platform.translation.x += -2.0 * velocity.value.x * time.delta_seconds();
         }
@@ -142,11 +146,20 @@ impl Building {
                 width: width * WORLD_SPRITE_SCALE.x,
             })
             .insert(Scrollable)
-            .insert(Collider::cuboid(width / 2.0, BUILDING_HEIGHT / 2.0))
             .insert(Anchor::TopCenter)
             .with_children(|parent| {
                 let half_ext = BUILDING_WIDTH / 2.0;
                 let mut prev_x = width / -2.0 + half_ext * -1.0;
+
+                let collider_height = 24.0;
+                parent
+                    .spawn(Collider::cuboid(width / 2.0, collider_height / 2.0))
+                    .insert(TransformBundle::from(Transform::from_xyz(
+                        0.0,
+                        (BUILDING_HEIGHT - collider_height) / 2.0,
+                        0.0,
+                    )))
+                    .insert(Ground);
 
                 for i in 0..reps {
                     let x = prev_x + BUILDING_WIDTH;

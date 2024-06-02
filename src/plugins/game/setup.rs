@@ -10,7 +10,7 @@ use bevy_tweening::TweeningPlugin;
 use super::prelude::Responsive;
 use crate::{
     plugins::{debug::DebugPlugin, entities::terrain::Platform},
-    GameGroundCheckPlugin,
+    GameGroundCheckPlugin, Ground,
 };
 use glib::*;
 
@@ -23,7 +23,7 @@ impl Plugin for GameEssentialsPlugin {
         app.insert_resource(ClearColor(WORLD_BACKGROUND_COLOR))
             .insert_resource(Msaa::Off)
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-            .add_plugins(GameGroundCheckPlugin::<Platform>::default())
+            .add_plugins(GameGroundCheckPlugin::<Ground>::default())
             .add_plugins((
                 DefaultPlugins
                     .set(WindowPlugin {

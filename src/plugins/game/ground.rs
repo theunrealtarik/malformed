@@ -4,6 +4,9 @@ use crate::GameState;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+#[derive(Component, Reflect, Default)]
+pub struct Ground;
+
 #[derive(Component, Reflect, PartialEq, Eq)]
 pub struct Grounded {
     pub value: bool,
