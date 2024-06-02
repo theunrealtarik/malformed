@@ -1,4 +1,10 @@
-use bevy::prelude::*;
+use bevy::{
+    core_pipeline::{
+        bloom::{BloomCompositeMode, BloomSettings},
+        tonemapping::Tonemapping,
+    },
+    prelude::*,
+};
 use bevy_rapier2d::na;
 use glib::utils::easings;
 
@@ -28,6 +34,11 @@ impl MainCameraBundle {
     pub fn new() -> Self {
         Self {
             camera_2d: Camera2dBundle {
+                camera: Camera {
+                    hdr: true,
+                    ..Default::default()
+                },
+                tonemapping: Tonemapping::TonyMcMapface,
                 transform: Transform::from_xyz(
                     CAMERA_STARTING_POSITIION.x,
                     CAMERA_STARTING_POSITIION.y,
@@ -61,7 +72,9 @@ impl Plugin for GameCameraPlugin {
 
 impl GameCameraPlugin {
     fn setup(mut commands: Commands) {
-        commands.spawn(MainCameraBundle::new());
+        commands
+            .spawn(MainCameraBundle::new())
+            .insert(BloomSettings::default());
     }
 
     fn set_focus_on_player(

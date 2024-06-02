@@ -59,6 +59,20 @@ impl EnvironmentPlugin {
                     .insert(Door)
                     .insert(Name::new("Door"));
             });
+
+        // street board
+        commands
+            .spawn(SpriteBundle {
+                texture: textures.street_board.clone(),
+                transform: Transform {
+                    translation: Vec3::new(RTE_X + 200.0, RTE_Y + 40.0, 0.0),
+                    scale: WORLD_SPRITE_SCALE,
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .insert(Name::new("Street Board"))
+            .insert(Scrollable);
     }
 
     fn open_door(
