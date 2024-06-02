@@ -1,14 +1,17 @@
 #![allow(clippy::type_complexity)]
 
 use super::terrain::{BuildingsPlugin, Platform};
-use crate::{Animation, GameAssetsState, SpriteLayouts, TextureAssets};
+use crate::{Animation, AuxiliaryVelocity, GameAssetsState, Player, SpriteLayouts, TextureAssets};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::time::Duration;
 
 use rand::prelude::*;
 
-use glib::{BUILDING_HEIGHT, WORLD_SPRITE_SCALE};
+use glib::{
+    BUILDING_HEIGHT, PLAYER_MAX_VELOCITY_X, PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER,
+    WORLD_SPRITE_SCALE,
+};
 
 #[derive(Default, Debug, Component)]
 pub struct Byte {
@@ -47,49 +50,61 @@ const MIN_FLOATING_Y: f32 = BUILDING_HEIGHT / 2.0 + 10.0;
 impl BytesPlugin {
     pub fn spawn(
         mut commands: Commands,
-        query: Query<(Entity, &Platform), Without<PreventByte>>,
+        platform_query: Query<(Entity, &Platform), Without<PreventByte>>,
+        player_query: Query<&AuxiliaryVelocity, With<Player>>,
         textures: Res<TextureAssets>,
         layouts: Res<SpriteLayouts>,
     ) {
-        if query.is_empty() {
+        if platform_query.is_empty() {
             return;
         }
 
-        for (entity, platform) in query.iter() {
+        let Ok(velocity) = player_query.get_single() else {
+            return;
+        };
+
+        for (entity, platform) in platform_query.iter() {
             let mut rng = rand::thread_rng();
-            let mid = (platform.width - 300.0) / (2.0 * WORLD_SPRITE_SCALE.x);
 
-            let x = rng.gen_range(-1.0 * mid..mid);
-            let y = (MAX_FLOATING_Y - MIN_FLOATING_Y) / 2.0 + MIN_FLOATING_Y;
+            if rng.gen_bool(
+                (PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER
+                    * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X))
+                    .into(),
+            ) {
+                let mid = (platform.width - 300.0) / (2.0 * WORLD_SPRITE_SCALE.x);
 
-            commands
-                .entity(entity)
-                .insert(PreventByte)
-                .with_children(|parent| {
-                    parent
-                        .spawn(SpriteSheetBundle {
-                            texture: textures.byte.clone(),
-                            atlas: TextureAtlas {
-                                layout: layouts.byte_layout.clone(),
-                                index: 0,
-                            },
-                            transform: Transform {
-                                translation: Vec3::new(x, y, 10.0),
-                                scale: WORLD_SPRITE_SCALE,
+                let x = rng.gen_range(-1.0 * mid..mid);
+                let y = (MAX_FLOATING_Y - MIN_FLOATING_Y) / 2.0 + MIN_FLOATING_Y;
+
+                commands
+                    .entity(entity)
+                    .insert(PreventByte)
+                    .with_children(|parent| {
+                        parent
+                            .spawn(SpriteSheetBundle {
+                                texture: textures.byte.clone(),
+                                atlas: TextureAtlas {
+                                    layout: layouts.byte_layout.clone(),
+                                    index: 0,
+                                },
+                                transform: Transform {
+                                    translation: Vec3::new(x, y, 10.0),
+                                    scale: WORLD_SPRITE_SCALE,
+                                    ..Default::default()
+                                },
                                 ..Default::default()
-                            },
-                            ..Default::default()
-                        })
-                        .insert(Name::new("Byte"))
-                        .insert(Byte::new(x, y, 1.0))
-                        .insert(Collider::cuboid(4.0, 4.0))
-                        .insert(Sensor)
-                        .insert(Animation::auto(
-                            Duration::from_millis(30),
-                            TimerMode::Repeating,
-                            72,
-                        ));
-                });
+                            })
+                            .insert(Name::new("Byte"))
+                            .insert(Byte::new(x, y, 1.0))
+                            .insert(Collider::cuboid(4.0, 4.0))
+                            .insert(Sensor)
+                            .insert(Animation::auto(
+                                Duration::from_millis(30),
+                                TimerMode::Repeating,
+                                72,
+                            ));
+                    });
+            }
         }
     }
 

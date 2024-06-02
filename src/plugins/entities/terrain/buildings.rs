@@ -63,8 +63,13 @@ impl BuildingsPlugin {
 
             let segments: usize = rng.gen_range(0..=10);
             let width = (segments + 2) as f32 * BUILDING_WIDTH * WORLD_SPRITE_SCALE.x;
-            let spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
-                + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth(1.0);
+
+            let mut spacing = PLATFORMS_MIN_SPACING * 3.0;
+
+            if velocity.value.x >= (PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP) * 1.05 {
+                spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
+                    + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth(1.0);
+            }
 
             let x = prev_trans.translation.x + (prev.width + width) / 2.0 + spacing;
             let y = rng.gen_range(PLATFORMS_MIN_Y..=PLATFORMS_MAX_Y);

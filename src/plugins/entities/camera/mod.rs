@@ -1,8 +1,5 @@
 use bevy::{
-    core_pipeline::{
-        bloom::{BloomCompositeMode, BloomSettings},
-        tonemapping::Tonemapping,
-    },
+    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
     prelude::*,
 };
 use bevy_rapier2d::na;
@@ -38,7 +35,7 @@ impl MainCameraBundle {
                     hdr: true,
                     ..Default::default()
                 },
-                tonemapping: Tonemapping::TonyMcMapface,
+                tonemapping: Tonemapping::BlenderFilmic,
                 transform: Transform::from_xyz(
                     CAMERA_STARTING_POSITIION.x,
                     CAMERA_STARTING_POSITIION.y,
@@ -74,7 +71,7 @@ impl GameCameraPlugin {
     fn setup(mut commands: Commands) {
         commands
             .spawn(MainCameraBundle::new())
-            .insert(BloomSettings::default());
+            .insert(BloomSettings::NATURAL);
     }
 
     fn set_focus_on_player(

@@ -36,8 +36,9 @@ pub const PLAYER_VELOCITY_BUMP: f32 = 150.0;
 pub const PLAYER_JUMP_WINDOW: f32 = 0.35;
 
 pub const PLAYER_MAX_MEMORY: f32 = 100.0;
-pub const PLAYER_MEMORY_DRAINING_RATE: f32 = 5.0;
-pub const PLAYER_MEMORY_REGEN_RATE: f32 = 10.0;
+pub const PLAYER_MEMORY_DRAINING_RATE: f32 = 1.0;
+pub const PLAYER_MEMORY_REGEN_RATE: f32 = 3.0;
+pub const PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER: f32 = 1.0 / 10.0;
 
 pub static DIALOG_LINES: [(&str, Duration); 4] = [
     (

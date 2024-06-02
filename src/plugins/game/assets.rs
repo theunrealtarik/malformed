@@ -70,8 +70,6 @@ pub struct AudioAssets {
     pub ambience: Handle<AudioSource>,
     #[asset(path = "embedded://audio/original.ogg")]
     pub original: Handle<AudioSource>,
-    #[asset(path = "embedded://audio/bsod.ogg")]
-    pub bsod: Handle<AudioSource>,
     #[asset(path = "embedded://audio/jump.ogg")]
     pub jmup: Handle<AudioSource>,
     #[asset(path = "embedded://audio/death.ogg")]

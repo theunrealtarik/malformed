@@ -8,6 +8,8 @@ use crate::{plugins::entities::player::Being, AudioAssets, GameAssetsState, Game
 #[derive(Resource)]
 struct InstanceHandle(Handle<AudioInstance>);
 
+const LOOP_POSITION: (f64, f64) = (38.392, 44.781);
+
 pub struct GameSoundTrack;
 
 impl Plugin for GameSoundTrack {
@@ -46,8 +48,8 @@ impl GameSoundTrack {
                 Duration::from_secs(5),
                 AudioEasing::OutPowi(2),
             ))
-            .loop_from(38.392)
-            .loop_until(44.781)
+            .loop_from(LOOP_POSITION.0)
+            .loop_until(LOOP_POSITION.1)
             .with_volume(0.3)
             .handle();
 
