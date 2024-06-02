@@ -13,6 +13,7 @@ pub use plugins::*;
 pub use states::*;
 
 use bevy::prelude::*;
+use bevy_rapier2d::na;
 use bevy_rapier2d::prelude::*;
 
 use crate::plugins::game::ground::*;
@@ -230,7 +231,7 @@ impl PlayerPlugin {
             (
                 Entity,
                 &ReadMassProperties,
-                &Velocity,
+                &mut Velocity,
                 &AuxiliaryVelocity,
                 &mut Jump,
                 &mut GravityScale,
@@ -246,11 +247,12 @@ impl PlayerPlugin {
             return;
         }
 
-        let (entity, mass, velocity, _, mut jump, mut gravity) = player.single_mut();
+        let (entity, mass, mut velocity, _, mut jump, mut gravity) = player.single_mut();
         let grounded = children.single().value;
 
         if grounded {
             jump.coyote = PLAYER_COYOTE_JUMP_TIME;
+            *gravity = GravityScale(1.0);
         } else {
             jump.coyote -= time.delta_seconds();
         }
@@ -263,7 +265,8 @@ impl PlayerPlugin {
             jump.buffering -= time.delta_seconds();
         }
 
-        let jump_magnitude = mass.get().mass * (PLAYER_JUMP_HEIGHT * rules.gravity.y * -2.0).sqrt();
+        let jump_magnitude = mass.get().mass
+            * (PLAYER_JUMP_HEIGHT * -2.0 * rules.gravity.y / PLAYER_FALL_GRAVITY).sqrt();
         if jump.buffering > 0.0 && jump.coyote > 0.0 {
             commands.entity(entity).insert(ExternalImpulse {
                 impulse: Vec2::new(0.0, jump_magnitude),
@@ -285,11 +288,11 @@ impl PlayerPlugin {
                         torque_impulse: 0.0,
                     });
                 }
-
                 *gravity = GravityScale(PLAYER_FALL_GRAVITY);
             }
 
             if velocity.linvel.y < 0.0 {
+                velocity.linvel.y -= velocity.linvel.y * time.delta_seconds() * 2.0;
                 jump.rising = false;
             }
         }
@@ -341,7 +344,6 @@ impl PlayerPlugin {
     pub fn collect(
         mut commands: Commands,
         mut player: Query<(Entity, &mut Memory), With<Player>>,
-        time: Res<Time>,
         bytes: Query<Entity, With<Byte>>,
         ctx: Res<RapierContext>,
     ) {
@@ -354,7 +356,7 @@ impl PlayerPlugin {
         for byte in bytes.iter() {
             if ctx.intersection_pair(byte, player) == Some(true) {
                 commands.entity(byte).despawn_recursive();
-                memory.value += PLAYER_MEMORY_REGEN_RATE;
+                memory.value = na::clamp(memory.value + PLAYER_MEMORY_REGEN_RATE, 0.0, 100.0);
             }
         }
     }

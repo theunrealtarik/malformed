@@ -66,7 +66,7 @@ impl BuildingsPlugin {
 
             let mut spacing = PLATFORMS_MIN_SPACING * 3.0;
 
-            if velocity.value.x >= (PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP) * 1.05 {
+            if velocity.value.x >= (PLAYER_INIT_VELOCITY_X + PLAYER_VELOCITY_BUMP) * 1.02 {
                 spacing = (PLATFORMS_MAX_SPACING - PLATFORMS_MIN_SPACING)
                     + rng.gen_range(PLATFORMS_MIN_SPACING..=PLATFORMS_MAX_SPACING) * growth(1.0);
             }

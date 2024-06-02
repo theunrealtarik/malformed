@@ -65,45 +65,44 @@ impl BytesPlugin {
 
         for (entity, platform) in platform_query.iter() {
             let mut rng = rand::thread_rng();
+            let chance = (PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER
+                * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X))
+                .into();
 
-            if rng.gen_bool(
-                (PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER
-                    * (1.0 - velocity.value.x / PLAYER_MAX_VELOCITY_X))
-                    .into(),
-            ) {
+            let mut building = commands.entity(entity);
+            building.insert(PreventByte);
+
+            if rng.gen_bool(chance) {
                 let mid = (platform.width - 300.0) / (2.0 * WORLD_SPRITE_SCALE.x);
 
                 let x = rng.gen_range(-1.0 * mid..mid);
                 let y = (MAX_FLOATING_Y - MIN_FLOATING_Y) / 2.0 + MIN_FLOATING_Y;
 
-                commands
-                    .entity(entity)
-                    .insert(PreventByte)
-                    .with_children(|parent| {
-                        parent
-                            .spawn(SpriteSheetBundle {
-                                texture: textures.byte.clone(),
-                                atlas: TextureAtlas {
-                                    layout: layouts.byte_layout.clone(),
-                                    index: 0,
-                                },
-                                transform: Transform {
-                                    translation: Vec3::new(x, y, 10.0),
-                                    scale: WORLD_SPRITE_SCALE,
-                                    ..Default::default()
-                                },
+                building.with_children(|parent| {
+                    parent
+                        .spawn(SpriteSheetBundle {
+                            texture: textures.byte.clone(),
+                            atlas: TextureAtlas {
+                                layout: layouts.byte_layout.clone(),
+                                index: 0,
+                            },
+                            transform: Transform {
+                                translation: Vec3::new(x, y, 10.0),
+                                scale: WORLD_SPRITE_SCALE,
                                 ..Default::default()
-                            })
-                            .insert(Name::new("Byte"))
-                            .insert(Byte::new(x, y, 1.0))
-                            .insert(Collider::cuboid(4.0, 4.0))
-                            .insert(Sensor)
-                            .insert(Animation::auto(
-                                Duration::from_millis(30),
-                                TimerMode::Repeating,
-                                72,
-                            ));
-                    });
+                            },
+                            ..Default::default()
+                        })
+                        .insert(Name::new("Byte"))
+                        .insert(Byte::new(x, y, 1.0))
+                        .insert(Collider::cuboid(4.0, 4.0))
+                        .insert(Sensor)
+                        .insert(Animation::auto(
+                            Duration::from_millis(30),
+                            TimerMode::Repeating,
+                            72,
+                        ));
+                });
             }
         }
     }

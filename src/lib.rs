@@ -19,11 +19,11 @@ pub const WORLD_SPRITE_SCALE: Vec3 = Vec3::new(2.0, 2.0, 1.0);
 // player
 pub const PLAYER_SCALE_X: f32 = WORLD_SPRITE_SCALE.x;
 pub const PLAYER_SCALE_Y: f32 = WORLD_SPRITE_SCALE.y;
-pub const PLAYER_MASS: f32 = 300.0;
+pub const PLAYER_MASS: f32 = 100.0;
 pub const PLAYER_COLLIDER_WIDTH: f32 = 24.0;
 pub const PLAYER_COLLIDER_HEIGHT: f32 = 34.0;
 pub const PLAYER_RISE_GRAVITY: f32 = 1.0;
-pub const PLAYER_FALL_GRAVITY: f32 = 2.8;
+pub const PLAYER_FALL_GRAVITY: f32 = 2.0;
 pub const PLAYER_COYOTE_JUMP_TIME: f32 = 0.35;
 pub const PLAYER_JUMP_BUFFERING_TIME: f32 = 0.3;
 pub const PLAYER_JUMP_HEIGHT: f32 = 200.0;
@@ -38,7 +38,7 @@ pub const PLAYER_JUMP_WINDOW: f32 = 0.35;
 pub const PLAYER_MAX_MEMORY: f32 = 100.0;
 pub const PLAYER_MEMORY_DRAINING_RATE: f32 = 1.0;
 pub const PLAYER_MEMORY_REGEN_RATE: f32 = 3.0;
-pub const PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER: f32 = 1.0 / 10.0;
+pub const PLAYER_MEMORY_SHARDS_SPAWN_RATE_MODIFIER: f32 = 1.0 / 2.0;
 
 pub static DIALOG_LINES: [(&str, Duration); 4] = [
     (

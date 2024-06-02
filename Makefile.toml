@@ -10,3 +10,4 @@ args = ["build", "--features", "bevy/dynamic_linking"]
 [tasks.run]
 command = "cargo"
 args = ["run", "--features", "bevy/dynamic_linking"]
+
