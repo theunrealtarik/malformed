@@ -68,14 +68,10 @@ pub struct FontsAssets {
 pub struct AudioAssets {
     #[asset(path = "embedded://audio/ambience.ogg")]
     pub ambience: Handle<AudioSource>,
-    #[asset(path = "embedded://audio/init_segment.ogg")]
-    pub intial_segment: Handle<AudioSource>,
-    #[asset(path = "embedded://audio/loop_0.ogg")]
-    pub loopable_segment_0: Handle<AudioSource>,
-    #[asset(path = "embedded://audio/loop_1.ogg")]
-    pub loopable_segment_1: Handle<AudioSource>,
     #[asset(path = "embedded://audio/original.ogg")]
     pub original: Handle<AudioSource>,
+    #[asset(path = "embedded://audio/bsod.ogg")]
+    pub bsod: Handle<AudioSource>,
     #[asset(path = "embedded://audio/jump.ogg")]
     pub jmup: Handle<AudioSource>,
     #[asset(path = "embedded://audio/death.ogg")]

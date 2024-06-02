@@ -31,7 +31,7 @@ impl RPCPlugin {
     fn setup(mut rpc: ResMut<DiscordRPC>) {
         if rpc.client.connect().is_ok() {
             let payload = activity::Activity::new()
-            .details("Komboter is not dying, not today.")
+                .details("Komboter is not dying, not today.")
                 .assets(
                     Assets::new()
                         .large_text(DISCORD_STATE)

@@ -67,14 +67,15 @@ impl GameSoundTrack {
                     PlaybackState::Playing { position: _ } => {
                         if ev.before == Being::Alive && ev.after == Being::Dead {
                             instance.pause(AudioTween::new(
-                                Duration::from_secs_f32(0.2),
-                                AudioEasing::OutPowi(1),
+                                Duration::from_secs_f32(0.0),
+                                AudioEasing::OutPowi(0),
                             ));
                             audio.play(audio_assets.death.clone()).with_volume(0.5);
                         }
                     }
                     PlaybackState::Paused { position: _ } => {
                         if ev.before == Being::Dead && ev.after == Being::Alive {
+                            instance.seek_to(38.392);
                             instance.resume(AudioTween::new(
                                 Duration::from_secs_f32(0.2),
                                 AudioEasing::OutPowi(1),
