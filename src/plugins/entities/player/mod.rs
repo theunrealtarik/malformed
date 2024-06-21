@@ -127,7 +127,7 @@ impl PlayerPlugin {
         if transform.translation.y < PLATFORMS_MIN_Y || memory.value == 0.0 {
             die();
 
-            #[cfg(feature = "bsod")]
+            #[cfg(feature = "bsod", windows)]
             {
                 glib::bsod::bsod();
             }

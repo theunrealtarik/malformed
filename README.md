@@ -5,6 +5,8 @@
 > [!WARNING]
 > This game is a piece of software that will entirely crash your computer whenever you lose which can lead to hardware-level damage and loss of any progress of any ongoing work.
 
+> [!WARNING]
+> I'm not responsible for any mis use of the provided code in this repository.
 
 ## Download
 If you just want to try what the game is all about (nothing new really) please download the **regular** version as it doesn't crash your whole system, instead your player will respawn and restart the level, unlike the **BSoD** version.
